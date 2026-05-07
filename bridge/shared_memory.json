@@ -1,0 +1,24 @@
+{
+  "sessions": [],
+  "learnings": [],
+  "skills": [
+    {
+      "name": "research_and_summarize",
+      "type": "hybrid"
+    },
+    {
+      "name": "code_review",
+      "type": "hybrid"
+    },
+    {
+      "name": "plan_project",
+      "type": "hybrid"
+    },
+    {
+      "name": "learn_new_skill",
+      "type": "hybrid"
+    }
+  ],
+  "version": "0.1.0",
+  "created": "2026-05-07T23:15:00+02:00"
+}
