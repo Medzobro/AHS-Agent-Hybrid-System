@@ -20,6 +20,16 @@
       },
       "source": "system",
       "timestamp": 1778189875.4101527
+    },
+    {
+      "key": "task_0",
+      "value": {
+        "task": "من أنت",
+        "type": "hybrid",
+        "response_summary": "🤝 **AHS Hybrid Agent**\n\n[تفكير Hermes]\nThe user is asking \"من أنت\" which means \"Who are you\" in Arab"
+      },
+      "source": "system",
+      "timestamp": 1778190248.0929778
     }
   ],
   "skills": [

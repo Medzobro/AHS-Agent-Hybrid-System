@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.orchestrator import HybridOrchestrator, TaskType
 from bridge.hermes_bridge import HermesBridge
+from skills.synthesizer import ResponseSynthesizer
 
 
 class HybridAgent:
@@ -33,7 +34,7 @@ class HybridAgent:
         self.version = "0.1.0"
         self.name = "AHS (Agent Hybrid System)"
 
-    def process(self, task: str, user_id: str = "user") -> Dict:
+    def process(self, task: str, user_id: str = "user", hybrid: bool = False) -> Dict:
         """
         معالجة مهمة خلال النظام الهجين.
 
@@ -43,8 +44,26 @@ class HybridAgent:
         4. تجميع النتيجة
         5. حفظ في الذاكرة
         6. الرد
+
+        Args:
+            hybrid: إذا True → يستخدم ResponseSynthesizer (OpenClaw + Hermes معاً)
         """
         start_time = time.time()
+
+        # إذا hybrid → نستخدم الـ synthesizer
+        if hybrid:
+            synth = ResponseSynthesizer()
+            result = synth.synthesize(task)
+            self.orchestrator.record_learning(f"task_{len(self.history)}", {
+                "task": task, "elapsed": result["elapsed"]
+            })
+            self.history.append(result)
+            return {
+                "task": task,
+                "classification": "hybrid",
+                "response": result["final"],
+                "stats": {"elapsed_seconds": result["elapsed"], "hermes_used": True},
+            }
 
         # الخطوة 1-2: تحليل وتخطيط
         classification = self.orchestrator.classify_task(task)
@@ -71,7 +90,10 @@ class HybridAgent:
 
         # إذا ما حصلنا رد نهائي
         if not final_response:
-            final_response = self._openclaw_respond(task, execution_log)
+            # نستخدم الـ synthesizer
+            synth = ResponseSynthesizer()
+            syn = synth.synthesize(task)
+            final_response = syn["final"]
 
         # الخطوة 5: حفظ في الذاكرة
         self.orchestrator.record_learning(
