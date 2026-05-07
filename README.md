@@ -6,9 +6,9 @@
 [![Tests](https://img.shields.io/badge/tests-18/18-✅)]()
 [![Lines](https://img.shields.io/badge/lines-10K+-success)]()
 
-**نظام هجين يجمع OpenClaw (تحكم سريع) + Hermes (تفكير عميق DeepSeek R1).**
+**A hybrid system combining OpenClaw (fast control) + Hermes (deep reasoning via DeepSeek R1).**
 
-AHS هو نظام وكيل ذكاء اصطناعي هجين يجمع قوة وكلاء متعددين في نظام واحد متكامل. بدلاً من اختيار وكيل واحد، AHS يختار الأسلوب الأمثل لكل مهمة — سريع للمهام البسيطة، وعميق للمهام المعقدة.
+AHS is a hybrid AI agent system that combines the power of multiple agents into one integrated platform. Instead of choosing a single agent, AHS selects the optimal approach for each task — fast for simple tasks, deep for complex ones.
 
 ---
 
@@ -30,71 +30,71 @@ python3 system/repl.py
 
 ## ✨ Features
 
-| الميزة | الحالة |
-|--------|--------|
-| 🧠 **Hybrid Mode** — OpenClaw سريع + Hermes عميق | ✅ |
-| 🔄 **Auto Mode** — اختيار الوضع الأنسب تلقائياً | ✅ |
-| 🏗️ **Multi-Agent** — 5 وكلاء بأدوار مختلفة | ✅ |
-| 🔧 **Tool Registry** — 10 أدوات مدمجة | ✅ |
-| 🧩 **Plugin System** — إضافات خارجية | ✅ |
-| 📊 **Monitoring** — مراقبة الأداء والصحة | ✅ |
-| ⏰ **Scheduler** — مهام تلقائية في الخلفية | ✅ |
-| 📝 **Logger** — تسجيل كامل لكل شيء | ✅ |
-| 📡 **Event Bus** — تواصل غير متزامن بين المكونات | ✅ |
-| 🧪 **Tests** — 18 اختبار شامل | ✅ |
-| 💾 **Cache** — تخزين مؤقت ذكي | ✅ |
-| 📤 **Exporter** — تصدير JSON, CSV, MD, HTML | ✅ |
-| 💬 **REPL** — واجهة تفاعلية سطرية | ✅ |
-| 🌐 **Data Pipeline** — خطوط معالجة بيانات | ✅ |
-| 🏥 **Doctor** — فحوصات صحية للنظام | ✅ |
+| Feature | Status |
+|---------|--------|
+| 🧠 **Hybrid Mode** — OpenClaw fast + Hermes deep reasoning | ✅ |
+| 🔄 **Auto Mode** — Auto-selects best execution mode | ✅ |
+| 🏗️ **Multi-Agent** — 5 agents with different roles in parallel | ✅ |
+| 🔧 **Tool Registry** — 10 built-in extensible tools | ✅ |
+| 🧩 **Plugin System** — External plugin discovery & loading | ✅ |
+| 📊 **Monitoring** — Real-time performance & health monitoring | ✅ |
+| ⏰ **Scheduler** — Background task scheduling (cron-like) | ✅ |
+| 📝 **Logger** — Full logging with files, memory, levels | ✅ |
+| 📡 **Event Bus** — Async pub/sub communication between components | ✅ |
+| 🧪 **Tests** — 18 comprehensive tests, all passing | ✅ |
+| 💾 **Cache** — Smart LRU cache with TTL expiration | ✅ |
+| 📤 **Exporter** — Export to JSON, CSV, Markdown, HTML | ✅ |
+| 💬 **REPL** — Interactive command-line interface | ✅ |
+| 🌐 **Data Pipeline** — Configurable data processing pipelines | ✅ |
+| 🏥 **Doctor** — 7 health checks (Hermes, API, FS, network, memory, Python, perf) | ✅ |
 
 ## 📊 Performance
 
 | Mode | Time | Use Case |
 |------|------|----------|
-| **Quick** | <1s | ترحيب، أوامر بسيطة |
-| **Hybrid** | ~14s | أسئلة معرفية، تحليل |
-| **Code** | ~21-27s | كتابة كود |
-| **Flow** | ~10s | مهام متعددة الخطوات |
-| **Deep** | ~20-30s | بحث عميق |
+| **Quick** | <1s | Greetings, simple commands |
+| **Hybrid** | ~14s | Knowledge questions, analysis |
+| **Code** | ~21-27s | Code generation |
+| **Flow** | ~10s | Multi-step workflows |
+| **Deep** | ~20-30s | Deep research |
 
 ## 🏗️ Architecture (10,000+ lines)
 
 ```
 AHS/
-├── core/           # 4 files  ← التصنيف والتخطيط
-├── bridge/         # 1 file   ← جسر Hermes
-├── skills/         # 5 files  ← المهارات (10 مهارات)
-├── system/         # 15 files ← الأنظمة (كل شيء)
-├── tests/          # 1 file   ← 18 اختبار
-├── docs/           # 2 files  ← دليل عربي + إنجليزي
-├── generated/      # 2 files  ← كود مولّد
-└── 34 ملفاً إجمالاً
+├── core/           # 4 files  — Task classification & planning
+├── bridge/         # 1 file   — Hermes bridge
+├── skills/         # 5 files  — 10 hybrid skills
+├── system/         # 15 files — All support systems
+├── tests/          # 1 file   — 18 tests
+├── docs/           # 2 files  — Arabic + English guides
+├── generated/      # 2 files  — AI-generated code
+└── 34 files total
 ```
 
 ## 🔧 Systems
 
-| النظام | الوصف | الملفات |
-|--------|-------|---------|
-| **Orchestrator** | تصنيف المهام وتخطيطها | 2 |
-| **Agent Loop** | حلقة الوكيل الكاملة | 1 |
-| **Hermes Bridge** | التواصل مع DeepSeek R1 | 1 |
-| **Tool Registry** | 10 أدوات قابلة للتوسع | 1 |
-| **Skill Manager** | اكتشاف وتحميل المهارات | 1 |
-| **Multi-Agent** | 5 وكلاء بالتوازي | 1 |
-| **Event Bus** | تواصل غير متزامن | 1 |
-| **Config Manager** | إعدادات متداخلة مع Profiles | 1 |
-| **Logger** | تسجيل كامل بملفات | 1 |
-| **Monitor** | مراقبة وتنبيهات | 1 |
-| **Scheduler** | مهام تلقائية | 1 |
-| **Cache** | تخزين مؤقت LRU | 1 |
-| **Pipeline** | خطوط معالجة بيانات | 1 |
-| **Plugin System** | إضافات خارجية | 1 |
-| **Exporter** | تصدير 5 صيغ | 1 |
-| **REPL** | واجهة تفاعلية | 1 |
-| **Doctor** | فحوصات صحية | 1 |
-| **Integration** | نقطة دخول موحدة | 1 |
-| **Utils** | أدوات مساعدة | 1 |
+| System | Description | Files |
+|--------|-------------|-------|
+| **Orchestrator** | Task classification & planning | 2 |
+| **Agent Loop** | Full agent execution loop | 1 |
+| **Hermes Bridge** | DeepSeek R1 communication bridge | 1 |
+| **Tool Registry** | 10 extensible tools with rate limiting | 1 |
+| **Skill Manager** | Dynamic skill discovery & loading | 1 |
+| **Multi-Agent** | 5 parallel agents with distinct roles | 1 |
+| **Event Bus** | Async pub/sub event system | 1 |
+| **Config Manager** | Nested config with profiles | 1 |
+| **Logger** | Full file/memory logging with levels | 1 |
+| **Monitor** | Real-time metrics & alerts | 1 |
+| **Scheduler** | Background recurring tasks | 1 |
+| **Cache** | LRU cache with TTL | 1 |
+| **Pipeline** | Data processing pipelines | 1 |
+| **Plugin System** | External plugin discovery | 1 |
+| **Exporter** | JSON, CSV, MD, HTML export | 1 |
+| **REPL** | Interactive command-line shell | 1 |
+| **Doctor** | 7 health checks | 1 |
+| **Integration** | Unified entry point | 1 |
+| **Utils** | Text, data, time, file utilities | 1 |
 
 ## 🧪 Tests (18/18 ✅)
 
@@ -109,39 +109,39 @@ Utility             → 2/2 ✅
 
 ## 📚 Documentation
 
-- **Arabic**: `docs/AHS_GUIDE.md` — الدليل العربي الكامل
+- **Arabic**: `docs/AHS_GUIDE.md` — Full Arabic guide
 - **English**: `docs/AHS_GUIDE_EN.md` — Full English guide
-- **Code**: `docs/` مع شروحات لكل ملف
+- **Code**: `docs/` with inline explanations for every file
 
 ## 🤝 Contributing
 
-نرحب بمساهماتكم! المشروع مفتوح المصدر للجميع.
+We welcome contributions! This is an open-source project for everyone.
 
 ```bash
-python3 tests/test_suite.py    # تشغيل الاختبارات
-git checkout -b feature/amazing  # إنشاء فرع
-# ... كتابة الكود ...
-git commit -m "إضافة رائعة"
+python3 tests/test_suite.py    # Run tests
+git checkout -b feature/amazing  # Create feature branch
+# ... write your code ...
+git commit -m "Add amazing feature"
 git push origin feature/amazing
-# إنشاء Pull Request
+# Create Pull Request
 ```
 
 ## 📜 License
 
-**MIT License** — حر بالكامل للاستخدام والتعديل والنشر.
+**MIT License** — Free to use, modify, and distribute.
 
 ## 👤 Credits
 
-- **Mohamed (@isgjobro)** — صاحب الفكرة والمطور الرئيسي
-- **OpenClaw** — منصة الوكيل الرئيسية
-- **Hermes AI** — التفكير العميق والمهارات
-- **DeepSeek** — نموذج R1
+- **Mohamed (@isgjobro)** — Creator and lead developer
+- **OpenClaw** — Primary agent platform
+- **Hermes AI** — Deep reasoning and skills
+- **DeepSeek** — R1 reasoning model
 
 ---
 
-> **10,000+ سطر كود | 34 ملف | 15 نظام | 10 مهارات | 18 اختبار**
+> **10,000+ lines | 34 files | 15 systems | 10 skills | 18 tests**
 >
-> "نظام واحد يجمع قوة وكلاء متعددين" 🤝
+> "One system combining the power of multiple agents" 🤝
 
 ## Directory Structure
 
