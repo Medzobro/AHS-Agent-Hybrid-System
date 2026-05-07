@@ -216,3 +216,32 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ============================================================
+#  __summary__
+# ============================================================
+# Main entry point for AHS Agent Hybrid System
+# 
+# Commands:
+#   --info       System information and component status
+#   --hybrid     Hybrid mode (OpenClaw + Hermes)
+#   --code       Code generation mode
+#   --flow       Multi-step flow mode
+#   --demo       Run demo scenarios
+#   --skill      Test hybrid skills
+#   -i           Interactive REPL mode
+# 
+# Architecture:
+#   core/orchestrator.py      Task classification & planning
+#   core/orchestrator_v2.py   Multi-step flow orchestration
+#   core/agent_loop.py        Complete agent execution loop
+#   bridge/hermes_bridge.py   Hermes AI communication bridge
+#   skills/*.py               Hybrid skills and code assistant
+#   system/*.py               Supporting systems (15 modules)
+# 
+# Exit codes:
+#   0  Success
+#   1  General error
+#   2  Configuration error
+#   3  Hermes bridge error
