@@ -1,6 +1,27 @@
 {
   "sessions": [],
-  "learnings": [],
+  "learnings": [
+    {
+      "key": "task_0",
+      "value": {
+        "task": "من أنت",
+        "type": "hybrid",
+        "response_summary": "🤝 **AHS Hybrid Agent**\n\n[تفكير Hermes]\nThe user is asking \"Who are you?\" in Arabic. Let me respond d"
+      },
+      "source": "system",
+      "timestamp": 1778189852.053589
+    },
+    {
+      "key": "task_1",
+      "value": {
+        "task": "وش هو AI Agent باختصار",
+        "type": "hybrid",
+        "response_summary": "🤝 **AHS Hybrid Agent**\n\n[تفكير Hermes]\nThe user is asking in Arabic (Saudi dialect): \"What is an AI "
+      },
+      "source": "system",
+      "timestamp": 1778189875.4101527
+    }
+  ],
   "skills": [
     {
       "name": "research_and_summarize",

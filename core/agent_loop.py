@@ -116,17 +116,18 @@ class HybridAgent:
 
     def _hermes_execute(self, action: str, task: str, log: List) -> str:
         """تنفيذ خطوة عبر Hermes مع وضع التفكير"""
-        context = ""
-        if log:
-            context = "\nالسياق حتى الآن:\n" + json.dumps(log[-3:], indent=2, ensure_ascii=False)
-
-        hermes_task = f"[{action}]\nالمهمة الأصلية: {task}{context}\n\nنفذ هذه الخطوة بدقة."
+        # مهم: نستخدم صيغة بسيطة لا تحفز Hermes على استخدام أدوات غير متاحة
+        hermes_task = (
+            f"فكر في هذا السؤال وأجب فقط:\n"
+            f"السؤال: {task}\n\n"
+            f"قدم إجابة مباشرة ومفيدة."
+        )
 
         result = self.hermes.send_task(
             task=hermes_task,
-            skills="dogfood,systematic-debugging",
+            skills="dogfood",
             thinking_mode=True,
-            timeout=120
+            timeout=60
         )
 
         if result.get("success"):
