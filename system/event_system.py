@@ -4,12 +4,12 @@ AHS - Event System
 ===================
 نظام الأحداث — إدارة الاتصالات غير المتزامنة بين المكونات.
 
-المميزات:
-  - Event Bus مركزي
-  - أحداث متزامنة وغير متزامنة
-  - فلاتر واشتراكات
-  - سجل الأحداث
-  - أنماط Pub/Sub
+Features:
+  - Central Event Bus
+  - Synchronous and async events
+  - Filters and subscriptions
+  - Event history
+  - Pub/Sub patterns
 """
 
 import json, os, sys, time, uuid, threading
@@ -27,7 +27,7 @@ class EventPriority(Enum):
 
 @dataclass
 class Event:
-    """حدث في النظام"""
+    """Event in the system"""
     type: str
     data: Any = None
     source: str = "system"
@@ -48,7 +48,7 @@ class Event:
 
 
 class EventSubscription:
-    """اشتراك في حدث معين"""
+    """Subscribe to a specific event"""
     def __init__(self, event_type: str, handler: Callable,
                  priority: EventPriority = EventPriority.NORMAL,
                  filter_fn: Optional[Callable] = None,
@@ -73,13 +73,13 @@ class EventSubscription:
 
 class EventBus:
     """
-    ناقل الأحداث المركزي — جميع المكونات تتواصل عبره.
+    Central event bus — all components communicate through it.
 
     الأنماط:
-      - emit: بث حدث لمشتركيه
+      - emit: Emit event لمشتركيه
       - on: اشتراك في حدث
       - once: اشتراك لمرة واحدة
-      - off: إلغاء الاشتراك
+      - off: Unsubscribe
     """
 
     def __init__(self):
@@ -94,7 +94,7 @@ class EventBus:
            priority: EventPriority = EventPriority.NORMAL,
            filter_fn: Optional[Callable] = None,
            name: Optional[str] = None) -> str:
-        """الاشتراك في حدث"""
+        """Subscribe to event"""
         subscription = EventSubscription(event_type, handler, priority, filter_fn, name)
         with self._lock:
             if event_type == "*":
@@ -106,7 +106,7 @@ class EventBus:
         return subscription.id
 
     def once(self, event_type: str, handler: Callable) -> str:
-        """الاشتراك لمرة واحدة"""
+        """One-time subscription"""
         def wrapper(event: Event):
             handler(event)
             self.off(sub_id)
@@ -114,7 +114,7 @@ class EventBus:
         return sub_id
 
     def off(self, subscription_id: str):
-        """إلغاء الاشتراك"""
+        """Unsubscribe"""
         with self._lock:
             for subs in self._subscriptions.values():
                 for sub in subs:
@@ -130,7 +130,7 @@ class EventBus:
              source: str = "system",
              priority: EventPriority = EventPriority.NORMAL,
              metadata: Optional[Dict] = None) -> Event:
-        """بث حدث"""
+        """Emit event"""
         event = Event(
             type=event_type,
             data=data,
@@ -172,13 +172,13 @@ class EventBus:
 
     def emit_async(self, event_type: str, data: Any = None,
                    source: str = "system") -> Event:
-        """بث حدث غير متزامن"""
+        """Emit event غير متزامن"""
         event = self.emit(event_type, data, source)
         return event
 
     def get_history(self, event_type: Optional[str] = None,
                     limit: int = 20) -> List[Event]:
-        """الحصول على سجل الأحداث"""
+        """Get event history"""
         if event_type:
             events = [e for e in self._history if e.type == event_type]
         else:
@@ -186,19 +186,19 @@ class EventBus:
         return events[-limit:]
 
     def clear_history(self):
-        """مسح سجل الأحداث"""
+        """Clear event history"""
         with self._lock:
             self._history.clear()
 
     def subscription_count(self) -> int:
-        """عدد المشتركين"""
+        """Subscription count"""
         count = len(self._wildcard_subs)
         for subs in self._subscriptions.values():
             count += len(subs)
         return count
 
     def get_stats(self) -> Dict:
-        """إحصائيات"""
+        """Statistics"""
         return {
             **self._stats,
             "subscriptions": self.subscription_count(),
@@ -207,7 +207,7 @@ class EventBus:
         }
 
 
-# ====== أنواع الأحداث القياسية ======
+# ====== Standard event types ======
 
 class SystemEvents:
     """أحداث النظام القياسية"""
@@ -252,7 +252,7 @@ class SystemEvents:
 # ====== Event Logger ======
 
 class EventLogger:
-    """يسجل الأحداث للتصحيح والمراقبة"""
+    """Records events for debugging and monitoring"""
     def __init__(self, bus: EventBus, log_file: Optional[str] = None):
         self.bus = bus
         self.log_file = log_file
@@ -285,7 +285,7 @@ class EventLogger:
         return self.log[-limit:]
 
     def summary(self) -> str:
-        """ملخص سريع"""
+        """Quick summary"""
         types = {}
         for entry in self.log:
             t = entry["type"]
@@ -301,7 +301,7 @@ class EventLogger:
 # ====== أمثلة ======
 
 class MessageHandler:
-    """مثال: معالج رسائل المستخدم"""
+    """Example: user message handler"""
     def __init__(self, bus: EventBus):
         self.bus = bus
         self.history: List[str] = []
@@ -324,7 +324,7 @@ class MessageHandler:
 
 
 class TaskMonitor:
-    """مثال: مراقب المهام"""
+    """Example: task monitor"""
     def __init__(self, bus: EventBus):
         self.bus = bus
         self.active_tasks: Set[str] = set()
@@ -363,7 +363,7 @@ if __name__ == "__main__":
     monitor = TaskMonitor(bus)
     logger = EventLogger(bus)
 
-    # محاكاة أحداث
+    # Simulate events
     bus.emit(SystemEvents.USER_MESSAGE, "مرحبا", source="test")
     bus.emit(SystemEvents.USER_COMMAND, "help", source="test")
     bus.emit(SystemEvents.TASK_STARTED, {"id": "task1"}, source="test")

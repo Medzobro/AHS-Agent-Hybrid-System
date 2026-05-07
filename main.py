@@ -2,12 +2,12 @@
 """
 AHS - Agent Hybrid System
 ==========================
-النظام الرئيسي — نقطة الدخول الموحدة
+Main System — Unified Entry Point
 
-الاستخدام:
-  python3 main.py "مهمتك هنا"
-  python3 main.py --hybrid "سؤال يحتاج تفكير"
-  python3 main.py --code "وصف الكود"
+Usage:
+  python3 main.py "Your task here"
+  python3 main.py --hybrid "Question requiring thinking"
+  python3 main.py --code "Code description"
   python3 main.py --interactive
   python3 main.py --demo
   python3 main.py --status
@@ -31,7 +31,7 @@ BOLD = "\033[1m"
 
 
 class AHS:
-    """Agent Hybrid System — الواجهة الرئيسية."""
+    """Agent Hybrid System — Main Interface."""
 
     def __init__(self):
         self.agent = HybridAgent()
@@ -51,13 +51,13 @@ class AHS:
                 resp = {
                     "task": task,
                     "response": (
-                        f"✅ **الكود جاهز!**\n📄 `{r['filename']}` ({r['lines']} سطر)\n"
-                        f"💾 محفوظ في: `generated/`\n⏱ {r['elapsed']}s"
+                        f"✅ **Code Ready!**\n📄 `{r['filename']}` ({r['lines']} lines)\n"
+                        f"💾 Saved in: `generated/`\n⏱ {r['elapsed']}s"
                     ),
                     "stats": {"elapsed_seconds": r["elapsed"]},
                 }
                 if show_thinking:
-                    print(f"📄 أول 200 حرف:\n{r['code'][:200]}")
+                    print(f"📄 First 200 characters:\n{r['code'][:200]}")
                 return resp
             return {"task": task, "response": f"❌ {r.get('error')}", "stats": {}}
 
@@ -95,7 +95,7 @@ class AHS:
         print(f" {BOLD}🤖 AHS v{self.agent.version} — {modes.get(mode, mode)}{RESET}")
         print(f" {BOLD}🧠 DeepSeek R1 + OpenClaw{RESET}")
         print(f"{BOLD}{'='*50}{RESET}")
-        print(" أكتب مهمتك (خروج للخروج):\n")
+        print(" Write your task (exit to quit):\n")
 
         kwargs_map = {
             "normal": {},
@@ -108,9 +108,9 @@ class AHS:
             try:
                 task = input(self._prompt_arrow()).strip()
                 if not task: continue
-                if task.lower() in ["exit", "quit", "خروج"]: break
-                if task.lower() in ["status", "حالة"]: self.status(); continue
-                if task.lower() in ["help", "مساعدة"]: self._show_help(); continue
+                if task.lower() in ["exit", "quit", "exit"]: break
+                if task.lower() in ["status", "status"]: self.status(); continue
+                if task.lower() in ["help", "help"]: self._show_help(); continue
 
                 start = time.time()
                 result = self.process(task, **kwargs)
@@ -125,16 +125,16 @@ class AHS:
 
     def run_demo(self):
         print(f"\n{BOLD}{'='*50}{RESET}")
-        print(f" {BOLD}{CYAN}🎬 AHS — العروض التفاعلية{RESET}")
-        print(f" {BOLD}   OpenClaw + Hermes معاً{RESET}")
+        print(f" {BOLD}{CYAN}🎬 AHS — Interactive Demos{RESET}")
+        print(f" {BOLD}   OpenClaw + Hermes Together{RESET}")
         print(f"{BOLD}{'='*50}{RESET}")
 
-        demo_scenario("كتابة كود Python", "دالة ترجع مجموع رقمين", "code")
-        demo_scenario("التدفق الهجين الكامل", "ما هو الـ AI Agent", "flow")
-        demo_scenario("الوضع الهجين", "لخص الـ AI Agent في جملة", "hybrid")
+        demo_scenario("Write Python Code", "Function that returns sum of two numbers", "code")
+        demo_scenario("Full Hybrid Flow", "What is an AI Agent", "flow")
+        demo_scenario("Hybrid Mode", "Summarize AI Agent in one sentence", "hybrid")
 
         print(f"\n{BOLD}{GREEN}{'='*50}{RESET}")
-        print(f" {BOLD}✅ 3 سيناريوهات!{RESET}")
+        print(f" {BOLD}✅ 3 Scenarios!{RESET}")
         print(f"{BOLD}{GREEN}{'='*50}{RESET}\n")
 
     def status(self):
@@ -146,10 +146,10 @@ class AHS:
     def _prompt_arrow(self): return f"{GREEN}❯{RESET} "
     
     def _show_help(self):
-        print(""" الأوامر:
-  help / مساعدة   ← هذه القائمة
-  status / حالة   ← حالة النظام
-  exit / خروج    ← إنهاء
+        print(""" Commands:
+  help / help     ← This list
+  status / status ← System status
+  exit / exit    ← Exit
 """)
 
 
@@ -158,17 +158,17 @@ def main():
         description="AHS - Agent Hybrid System (OpenClaw + Hermes)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
- أمثلة:
-  python3 main.py "مهمتي هنا"          # وضع عادي
-  python3 main.py --hybrid "سؤال"      # وضع هجين
-  python3 main.py --code "وصف كود"     # كتابة كود
-  python3 main.py --flow "وصف"         # تدفق متعدد الخطوات
-  python3 main.py -i                   # تفاعلي
-  python3 main.py --demo               # عروض تفاعلية
-  python3 main.py -s                   # حالة النظام
+ Examples:
+  python3 main.py "My task here"          # Normal mode
+  python3 main.py --hybrid "Question"      # Hybrid mode
+  python3 main.py --code "Code description"     # Write code
+  python3 main.py --flow "Description"         # Multi-step flow
+  python3 main.py -i                   # Interactive
+  python3 main.py --demo               # Interactive demos
+  python3 main.py -s                   # System status
 """
     )
-    parser.add_argument("task", nargs="?", help="المهمة")
+    parser.add_argument("task", nargs="?", help="The task")
     parser.add_argument("-i", "--interactive", action="store_true")
     parser.add_argument("--hybrid", action="store_true")
     parser.add_argument("--code", action="store_true")

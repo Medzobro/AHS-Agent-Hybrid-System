@@ -2,9 +2,9 @@
 """
 AHS - System Health & Doctor
 ==============================
-تشخيص صحة النظام — فحص جميع المكونات والتأكد من أنها تعمل.
+System Health Diagnosis — Check all components and ensure they are working.
 
-الفحوصات:
+Checks:
   - Hermes Gateway
   - API Keys
   - File System
@@ -24,7 +24,7 @@ import shutil
 
 @dataclass
 class CheckResult:
-    """نتيجة فحص"""
+    """Check result"""
     name: str
     status: str  # pass, fail, warn, error
     message: str
@@ -45,7 +45,7 @@ class CheckResult:
 
 
 class HealthCheck:
-    """فحص صحي لمكون معين"""
+    """Health check for a specific component"""
 
     def __init__(self, name: str):
         self.name = name
@@ -55,7 +55,7 @@ class HealthCheck:
 
 
 class HermesGatewayCheck(HealthCheck):
-    """فحص Hermes Gateway"""
+    """Check Hermes Gateway"""
 
     def __init__(self):
         super().__init__("Hermes Gateway")
@@ -72,13 +72,13 @@ class HermesGatewayCheck(HealthCheck):
                 return CheckResult(
                     name=self.name,
                     status="pass",
-                    message=f"Gateway شغال (PID: {', '.join(pids[:3])})",
+                    message=f"Gateway is running (PID: {', '.join(pids[:3])})",
                     details={"pids": pids, "count": len(pids)},
                     duration=time.time() - start,
                 )
             return CheckResult(
                 name=self.name, status="fail",
-                message="Gateway غير شغال",
+                message="Gateway is not running",
                 duration=time.time() - start,
             )
         except Exception as e:
@@ -89,7 +89,7 @@ class HermesGatewayCheck(HealthCheck):
 
 
 class ApiKeyCheck(HealthCheck):
-    """فحص مفاتيح API"""
+    """Check API Keys"""
 
     def __init__(self):
         super().__init__("API Keys")
@@ -107,26 +107,26 @@ class ApiKeyCheck(HealthCheck):
                     if "API_KEY" in line or "TOKEN" in line:
                         if "=" in line:
                             key, val = line.split("=", 1)
-                            status = "✅ موجود" if val and len(val) > 10 else "⚠️ فارغ"
+                            status = "✅ Present" if val and len(val) > 10 else "⚠️ Empty"
                             keys_found.append(f"{key}: {status}")
                             keys_missing.append(key)
 
         if keys_found:
             return CheckResult(
                 name=self.name, status="pass",
-                message=f"تم العثور على {len(keys_found)} مفتاح",
+                message=f"Found {len(keys_found)} keys",
                 details={"keys": keys_found},
                 duration=time.time() - start,
             )
         return CheckResult(
             name=self.name, status="warn",
-            message="لا توجد مفاتيح API",
+            message="No API keys found",
             duration=time.time() - start,
         )
 
 
 class FileSystemCheck(HealthCheck):
-    """فحص نظام الملفات"""
+    """Check File System"""
 
     def __init__(self):
         super().__init__("File System")
@@ -150,9 +150,9 @@ class FileSystemCheck(HealthCheck):
             if os.path.exists(full):
                 ok.append(p)
             else:
-                issues.append(f"مفقود: {p}")
+                issues.append(f"Missing: {p}")
 
-        # حجم المشروع
+        # Project size
         total_size = 0
         total_files = 0
         for root, dirs, files in os.walk(base):
@@ -167,7 +167,7 @@ class FileSystemCheck(HealthCheck):
         return CheckResult(
             name=self.name,
             status="pass" if not issues else "warn",
-            message=f"{total_files} ملفات, {total_size:,} بايت",
+            message=f"{total_files} files, {total_size:,} bytes",
             details={
                 "total_files": total_files,
                 "total_size": total_size,
@@ -180,7 +180,7 @@ class FileSystemCheck(HealthCheck):
 
 
 class MemoryCheck(HealthCheck):
-    """فحص الذاكرة والقرص"""
+    """Check Memory and Disk"""
 
     def __init__(self):
         super().__init__("System Resources")
@@ -204,7 +204,7 @@ class MemoryCheck(HealthCheck):
             status = "pass" if mem.percent < 90 and disk.percent < 90 else "warn"
             msg = f"RAM {mem.percent}% | Disk {disk.percent}%"
         except ImportError:
-            # Fallback بدون psutil
+            # Fallback without psutil
             statvfs = os.statvfs("/")
             disk_total = statvfs.f_frsize * statvfs.f_blocks
             disk_free = statvfs.f_frsize * statvfs.f_bfree
@@ -225,7 +225,7 @@ class MemoryCheck(HealthCheck):
 
 
 class NetworkCheck(HealthCheck):
-    """فحص الشبكة والاتصال"""
+    """Check Network and Connectivity"""
 
     def __init__(self):
         super().__init__("Network")
@@ -259,7 +259,7 @@ class NetworkCheck(HealthCheck):
 
 
 class PythonCheck(HealthCheck):
-    """فحص بيئة Python"""
+    """Check Python Environment"""
 
     def __init__(self):
         super().__init__("Python Environment")
@@ -287,7 +287,7 @@ class PythonCheck(HealthCheck):
         if missing:
             return CheckResult(
                 name=self.name, status="warn",
-                message=f"مفقود: {', '.join(missing)}",
+                message=f"Missing: {', '.join(missing)}",
                 details=details, duration=time.time() - start,
             )
         return CheckResult(
@@ -298,7 +298,7 @@ class PythonCheck(HealthCheck):
 
 
 class PerformanceCheck(HealthCheck):
-    """فحص الأداء"""
+    """Check Performance"""
 
     def __init__(self):
         super().__init__("Performance")
@@ -307,14 +307,14 @@ class PerformanceCheck(HealthCheck):
         start = time.time()
         perf_data = {}
 
-        # سرعة معالجة JSON
+        # JSON serialization speed
         test_data = {"key": "value" * 1000}
         json_start = time.time()
         for _ in range(100):
             json.dumps(test_data)
         perf_data["json_serialize"] = round((time.time() - json_start) / 100 * 1000, 2)
 
-        # سرعة العمليات الحسابية
+        # Calculation speed
         calc_start = time.time()
         for i in range(10000):
             _ = i * i + i / 2
@@ -329,7 +329,7 @@ class PerformanceCheck(HealthCheck):
 
 class Doctor:
     """
-    طبيب النظام — يشغل كل الفحوصات ويعطي تقريراً كاملاً.
+    System Doctor — Runs all checks and provides a complete report.
     """
 
     def __init__(self):
@@ -347,7 +347,7 @@ class Doctor:
         self.checks.append(check)
 
     def diagnose(self) -> Dict:
-        """تشغيل كل الفحوصات"""
+        """Run all checks"""
         results = []
         start = time.time()
 
@@ -358,7 +358,7 @@ class Doctor:
             except Exception as e:
                 results.append(CheckResult(
                     name=check.name, status="error",
-                    message=f"فشل الفحص: {e}"
+                    message=f"Check failed: {e}"
                 ))
 
         elapsed = time.time() - start
@@ -386,7 +386,7 @@ class Doctor:
         }
 
     def _recommendations(self, results: List[CheckResult]) -> List[str]:
-        """توليد توصيات بناءً على نتائج الفحوصات"""
+        """Generate recommendations based on check results"""
         recs = []
         for r in results:
             if r.status == "fail":
@@ -394,12 +394,12 @@ class Doctor:
             elif r.status == "warn":
                 recs.append(f"🟡 {r.name}: {r.message}")
         if not recs:
-            recs.append("✅ النظام في حالة جيدة")
-        recs.append("💡 نصيحة: شغّل الفحوصات دورياً للمتابعة")
+            recs.append("✅ System is in good condition")
+        recs.append("💡 Tip: Run checks periodically for monitoring")
         return recs
 
     def summary_text(self) -> str:
-        """تقرير نصي"""
+        """Text report"""
         report = self.diagnose()
         s = report["summary"]
 
@@ -415,7 +415,7 @@ class Doctor:
             f"⚠️ Warnings: {s['warnings']}",
             f"❌ Failed: {s['failed']}",
             "",
-            "━━━ الفحوصات ━━━",
+            "━━━ Checks ━━━",
         ]
 
         for c in report["checks"]:
@@ -423,7 +423,7 @@ class Doctor:
             icon = icons.get(c["status"], "❓")
             lines.append(f"  {icon} {c['name']}: {c['message']}")
 
-        lines.extend(["", "━━━ التوصيات ━━━"])
+        lines.extend(["", "━━━ Recommendations ━━━"])
         lines.extend(f"  {r}" for r in report["recommendations"])
         lines.append("")
 
@@ -431,13 +431,13 @@ class Doctor:
 
 
 def quick_health() -> Dict:
-    """فحص صحي سريع"""
+    """Quick health check"""
     doctor = Doctor()
     return doctor.diagnose()
 
 
 def print_health_report():
-    """طباعة تقرير الصحي"""
+    """Print health report"""
     doctor = Doctor()
     print(doctor.summary_text())
 

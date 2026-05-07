@@ -4,12 +4,12 @@ AHS - Task Scheduler
 =====================
 جدولة وتنظيم المهام — تشغيل مهام مجدولة ومتكررة.
 
-المميزات:
-  - جدولة مهام بفواصل زمنية
-  - مهام متكررة (cron-like)
-  - مهام بموعد محدد
-  - إدارة التبعيات
-  - تاريخ التنفيذ
+Features:
+  - Schedule tasks at intervals
+  - Recurring tasks (cron-like)
+  - One-time scheduled tasks
+  - Dependency management
+  - Execution history
 """
 
 import json, os, sys, time, uuid, threading, heapq
@@ -38,13 +38,13 @@ class TaskPriority(Enum):
 
 @dataclass
 class ScheduledTask:
-    """مهمة مجدولة"""
+    """Scheduled task"""
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     name: str = ""
     description: str = ""
     handler: Optional[Callable] = None
     interval_seconds: float = 0.0
-    max_runs: int = 0  # 0 = غير محدود
+    max_runs: int = 0  # 0 = unlimited
     priority: TaskPriority = TaskPriority.NORMAL
     status: TaskStatus = TaskStatus.PENDING
     next_run: float = 0.0
@@ -92,7 +92,7 @@ class ScheduledTask:
 
 class Scheduler:
     """
-    جدولة المهام — تشغيل مهام في الخلفية بفواصل زمنية.
+    Task scheduler — runs tasks in the background at intervals.
     """
 
     def __init__(self):
@@ -110,7 +110,7 @@ class Scheduler:
                  max_runs: int = 0,
                  tags: Optional[List[str]] = None,
                  start_now: bool = True) -> str:
-        """إضافة مهمة مجدولة"""
+        """إضافة Scheduled task"""
         task = ScheduledTask(
             name=name,
             description=description or f"Task: {name}",
@@ -126,7 +126,7 @@ class Scheduler:
         return task.id
 
     def remove_task(self, task_id: str) -> bool:
-        """إزالة مهمة"""
+        """Remove task"""
         with self._lock:
             if task_id in self._tasks:
                 self._tasks[task_id].status = TaskStatus.CANCELLED
@@ -159,7 +159,7 @@ class Scheduler:
         return False
 
     def start(self):
-        """تشغيل الجدولة في خلفية"""
+        """Start scheduler in background"""
         if self._running:
             return
         self._running = True
@@ -167,13 +167,13 @@ class Scheduler:
         self._thread.start()
 
     def stop(self):
-        """إيقاف الجدولة"""
+        """Stop scheduler"""
         self._running = False
         if self._thread:
             self._thread.join(timeout=5)
 
     def _run_loop(self):
-        """الحلقة الرئيسية للجدولة"""
+        """Main scheduler loop"""
         while self._running:
             now = time.time()
             due_tasks = []
@@ -200,7 +200,7 @@ class Scheduler:
             time.sleep(1)
 
     def _execute_task(self, task: ScheduledTask):
-        """تنفيذ مهمة واحدة"""
+        """Execute single task"""
         start = time.time()
 
         try:
@@ -247,7 +247,7 @@ class Scheduler:
         return self._history[-limit:]
 
     def get_stats(self) -> Dict:
-        """إحصائيات الجدولة"""
+        """Scheduler statistics"""
         tasks = list(self._tasks.values())
         total_runs = sum(t.run_count for t in tasks)
         total_errors = sum(t.error_count for t in tasks)
@@ -268,12 +268,12 @@ class Scheduler:
 # ====== أمثلة ======
 
 def example_hourly_task():
-    """مهمة مثال: تعمل كل ساعة"""
+    """Example: runs every hour"""
     return f"تم التنفيذ في {datetime.now().isoformat()}"
 
 
 def example_daily_task():
-    """مهمة مثال: تعمل كل 24 ساعة"""
+    """Example: runs every 24 hours"""
     return f"Daily task at {datetime.now().isoformat()}"
 
 

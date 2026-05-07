@@ -105,7 +105,7 @@ class ToolRegistry:
         self.max_history = 1000
 
     def register(self, tool: ToolSpec):
-        """تسجيل أداة جديدة"""
+        """Register tool جديدة"""
         if tool.name in self._tools:
             raise ValueError(f"الأداة '{tool.name}' مسجلة مسبقاً")
         self._tools[tool.name] = tool
@@ -116,7 +116,7 @@ class ToolRegistry:
             self.register(t)
 
     def unregister(self, name: str):
-        """إلغاء تسجيل أداة"""
+        """إلغاء Register tool"""
         self._tools.pop(name, None)
 
     def get(self, name: str) -> Optional[ToolSpec]:
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     reg = create_default_tools()
     print(dump_tools_registry(reg))
 
-    print("\n🧪 اختبار الأدوات:")
+    print("\n🧪 Test tools:")
     r1 = reg.call("calculate", expression="2 + 3 * 4")
     print(f"  calculate(2+3*4) = {r1.data} ✅" if r1.success else f"  ❌ {r1.error}")
 

@@ -2,11 +2,11 @@
 """
 AHS - Agent Hybrid System
 =========================
-النواة المركزية — تنسيق العمل بين OpenClaw و Hermes
+Central Core — Coordination between OpenClaw and Hermes
 
-المبدأ: كل مهمة تُحلَّل ثم تُوجَّه للطرف الأنسب.
-- OpenClaw: تنفيذ سريع، أوامر، تحكم
-- Hermes: تفكير عميق، بحث، مهارات متعددة
+Principle: Each task is analyzed and then directed to the most suitable party.
+- OpenClaw: Fast execution, commands, control
+- Hermes: Deep thinking, research, multiple skills
 """
 
 import json
@@ -18,19 +18,19 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 class TaskType(Enum):
-    """أنواع المهام — من يصلح لها"""
-    QUICK = "quick"           # رد سريع → OpenClaw
-    DEEP = "deep"             # تفكير عميق → Hermes
-    HYBRID = "hybrid"         # الاثنان معاً
-    SKILL = "skill"           # مهارة محددة → Hermes
-    CODE = "code"             # برمجة → OpenClaw + Hermes
-    COMMAND = "command"       # أمر مباشر → OpenClaw
+    """Task types — who is suitable for them"""
+    QUICK = "quick"           # Quick response → OpenClaw
+    DEEP = "deep"             # Deep thinking → Hermes
+    HYBRID = "hybrid"         # Both together
+    SKILL = "skill"           # Specific skill → Hermes
+    CODE = "code"             # Programming → OpenClaw + Hermes
+    COMMAND = "command"       # Direct command → OpenClaw
 
 
 class HybridOrchestrator:
     """
-    العقل المدبر للنظام الهجين.
-    يقرر من ينفذ المهمة ويتابع النتائج.
+    The mastermind of the hybrid system.
+    Decides who executes the task and follows up on results.
     """
 
     def __init__(self):
@@ -41,7 +41,7 @@ class HybridOrchestrator:
         self.memory: Dict = self._load_memory()
 
     def _load_memory(self) -> Dict:
-        """تحميل الذاكرة المشتركة"""
+        """Load shared memory"""
         if os.path.exists(self.memory_file):
             try:
                 with open(self.memory_file) as f:
@@ -51,18 +51,18 @@ class HybridOrchestrator:
         return {"sessions": [], "learnings": [], "skills": []}
 
     def _save_memory(self):
-        """حفظ الذاكرة المشتركة"""
+        """Save shared memory"""
         os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
         with open(self.memory_file, "w") as f:
             json.dump(self.memory, f, indent=2, ensure_ascii=False)
 
     def classify_task(self, task: str) -> Tuple[TaskType, str]:
         """
-        تحليل المهمة وتحديد نوعها والجهة المناسبة.
+        Analyze the task and determine its type and the appropriate party.
         """
         task_lower = task.lower()
 
-        # كشف النمط
+        # Pattern detection
         patterns = {
             TaskType.QUICK: [
                 "قل", "قول", "رد", "hello", "hi", "مرحبا", "شلونك",
@@ -87,7 +87,7 @@ class HybridOrchestrator:
                 if kw in task_lower:
                     return ttype, f"classified_as_{ttype.value}"
 
-        # المهام المعقدة → Hermes
+        # Complex tasks → Hermes
         if len(task) > 200:
             return TaskType.HYBRID, "long_task"
 
@@ -95,7 +95,7 @@ class HybridOrchestrator:
 
     def plan_execution(self, task: str, task_type: TaskType) -> Dict:
         """
-        تخطيط تنفيذ المهمة — من يفعل ماذا.
+        Plan task execution — who does what.
         """
         plan = {
             "task": task,
@@ -145,19 +145,19 @@ class HybridOrchestrator:
         return plan
 
     def record_learning(self, key: str, value: Any, source: str = "system"):
-        """تسجيل درس جديد في الذاكرة المشتركة"""
+        """Record a new lesson in shared memory"""
         self.memory["learnings"].append({
             "key": key,
             "value": value,
             "source": source,
             "timestamp": time.time()
         })
-        # نحتفظ بآخر 100 درس
+        # Keep the last 100 lessons
         self.memory["learnings"] = self.memory["learnings"][-100:]
         self._save_memory()
 
     def get_relevant_learnings(self, task: str, limit: int = 5) -> List[Dict]:
-        """استرجاع الدروس المتعلقة بالمهمة"""
+        """Retrieve lessons related to the task"""
         learnings = self.memory.get("learnings", [])
         task_lower = task.lower()
         relevant = []
@@ -169,21 +169,21 @@ class HybridOrchestrator:
 
     def run(self, task: str, user_id: str = "user") -> Dict:
         """
-        تشغيل المهمة خلال النظام الهجين.
-        هذه الدالة تستدعى من OpenClaw عند ورود أمر.
+        Run the task through the hybrid system.
+        This function is called from OpenClaw when a command arrives.
         """
-        # تسجيل المهمة
+        # Record the task
         self.history.append({
             "user_id": user_id,
             "task": task,
             "timestamp": time.time(),
         })
 
-        # تصنيف وتخطيط
+        # Classification and planning
         task_type, reason = self.classify_task(task)
         plan = self.plan_execution(task, task_type)
 
-        # استرجاع الدروس السابقة
+        # Retrieve previous lessons
         context = self.get_relevant_learnings(task)
 
         result = {
@@ -201,7 +201,7 @@ class HybridOrchestrator:
         return result
 
 
-# اختبار سريع
+# Quick test
 if __name__ == "__main__":
     orch = HybridOrchestrator()
 
@@ -214,9 +214,9 @@ if __name__ == "__main__":
 
     for task in test_tasks:
         print(f"\n{'='*50}")
-        print(f"📥 المهمة: {task}")
+        print(f"📥 Task: {task}")
         result = orch.run(task)
-        print(f"📊 التصنيف: {result['classification']['type']}")
-        print(f"📋 الخطة:")
+        print(f"📊 Classification: {result['classification']['type']}")
+        print(f"📋 Plan:")
         for step in result["plan"]["steps"]:
             print(f"   {step['action']} ← {step['by']}")

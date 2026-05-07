@@ -4,8 +4,8 @@ AHS - Configuration System
 ===========================
 نظام إعدادات مركزي — يدير الإعدادات من ملف YAML/JSON وبيئة التشغيل.
 
-المميزات:
-  - تحميل الإعدادات من ملف (config.yaml, config.json)
+Features:
+  - Load config من ملف (config.yaml, config.json)
   - دعم المتغيرات البيئية
   - إعدادات افتراضية
   - تحقق من صحة الإعدادات
@@ -82,7 +82,7 @@ DEFAULT_CONFIG = {
 
 
 class ConfigValidationError(Exception):
-    """خطأ في التحقق من صحة الإعدادات"""
+    """خطأ في Validate config"""
     pass
 
 
@@ -183,7 +183,7 @@ class ConfigManager:
         current[parts[-1]] = value
 
     def validate(self) -> List[str]:
-        """التحقق من صحة الإعدادات"""
+        """Validate config"""
         errors = []
         required_keys = ["model.provider", "model.primary"]
 
@@ -202,7 +202,7 @@ class ConfigManager:
         return errors
 
     def save(self, path: Optional[str] = None) -> bool:
-        """حفظ الإعدادات إلى ملف"""
+        """Save config إلى ملف"""
         save_path = path or self.config_file or "ahs_config.json"
         try:
             with open(save_path, "w", encoding="utf-8") as f:
@@ -238,7 +238,7 @@ class ConfigManager:
         self._loaded_files = []
 
     def summary(self) -> Dict:
-        """ملخص الإعدادات"""
+        """Config summary"""
         return {
             "version": self.get("ahs.version"),
             "profile": self.current_profile,
@@ -255,7 +255,7 @@ class ConfigManager:
         }
 
     def export(self, pretty: bool = True) -> str:
-        """تصدير الإعدادات إلى JSON"""
+        """Export config إلى JSON"""
         return json.dumps(self.config, indent=2 if pretty else None,
                          ensure_ascii=False)
 
@@ -268,7 +268,7 @@ class ConfigManager:
                 base[key] = copy.deepcopy(value)
 
     def _set_nested(self, d: Dict, key: str, value: Any):
-        """تعيين قيمة في قاموس متداخل"""
+        """Set value في قاموس متداخل"""
         parts = key.split(".")
         current = d
         for part in parts[:-1]:

@@ -4,12 +4,12 @@ AHS - Plugin System
 ====================
 نظام الإضافات — توسيع قدرات AHS بإضافات خارجية.
 
-المميزات:
-  - تحميل الإضافات من مجلدات
-  - اكتشاف تلقائي
-  - إدارة دورة الحياة (init, start, stop)
-  - نقاط تمديد (extension points)
-  - إضافات مدمجة
+Features:
+  - Load plugins from directories
+  - Auto-discovery
+  - Lifecycle management (init, start, stop)
+  - Extension points
+  - Built-in plugins
 """
 
 import json, os, sys, time, uuid, importlib, inspect, threading
@@ -36,7 +36,7 @@ class PluginPriority(Enum):
 
 @dataclass
 class PluginMeta:
-    """بيانات الإضافة الوصفية"""
+    """Plugin metadata"""
     name: str
     version: str = "0.1.0"
     description: str = ""
@@ -48,7 +48,7 @@ class PluginMeta:
 
 
 class Plugin:
-    """فئة أساسية للإضافات — جميع الإضافات ترث منها"""
+    """Base class for plugins — all plugins inherit from this"""
 
     meta = PluginMeta(name="base_plugin")
 
@@ -57,19 +57,19 @@ class Plugin:
         self.created_at = time.time()
 
     def on_load(self):
-        """استدعاء عند التحميل"""
+        """Called on load"""
         self.status = PluginStatus.LOADED
 
     def on_enable(self):
-        """استدعاء عند التفعيل"""
+        """Called on enable"""
         self.status = PluginStatus.ENABLED
 
     def on_disable(self):
-        """استدعاء عند التعطيل"""
+        """Called on disable"""
         self.status = PluginStatus.DISABLED
 
     def on_unload(self):
-        """استدعاء عند إلغاء التحميل"""
+        """Called on unload"""
         self.status = PluginStatus.DISABLED
 
     def get_info(self) -> Dict:
@@ -85,7 +85,7 @@ class Plugin:
 
 class PluginManager:
     """
-    مدير الإضافات — يكتشف ويحمل ويدير كل الإضافات.
+    Plugin manager — discovers, loads, and manages all plugins.
     """
 
     def __init__(self, plugin_dirs: Optional[List[str]] = None):
@@ -95,7 +95,7 @@ class PluginManager:
         self._hooks: Dict[str, List[Callable]] = {}
 
     def discover(self, directory: str) -> List[str]:
-        """البحث عن إضافات في مجلد"""
+        """Discover plugins in directory"""
         found = []
         path = Path(directory)
         if not path.exists():
@@ -114,7 +114,7 @@ class PluginManager:
         return found
 
     def load_plugin(self, plugin_path: str) -> Optional[Plugin]:
-        """تحميل إضافة من ملف"""
+        """Load plugin from file"""
         try:
             path = Path(plugin_path)
             if path.is_file():
@@ -154,7 +154,7 @@ class PluginManager:
             return None
 
     def load_all(self) -> Dict[str, str]:
-        """تحميل كل الإضافات من المجلدات المسجلة"""
+        """Load all plugins from registered directories"""
         results = {}
         for directory in self.plugin_dirs:
             found = self.discover(directory)
@@ -168,7 +168,7 @@ class PluginManager:
         return results
 
     def enable(self, name: str) -> bool:
-        """تفعيل إضافة"""
+        """Enable plugin"""
         plugin = self.plugins.get(name)
         if plugin and plugin.status == PluginStatus.LOADED:
             plugin.on_enable()
@@ -176,7 +176,7 @@ class PluginManager:
         return False
 
     def disable(self, name: str) -> bool:
-        """تعطيل إضافة"""
+        """Disable plugin"""
         plugin = self.plugins.get(name)
         if plugin:
             plugin.on_disable()
@@ -195,13 +195,13 @@ class PluginManager:
         return plugins
 
     def register_hook(self, hook_name: str, handler: Callable):
-        """تسجيل خطاف (hook)"""
+        """Register hook"""
         if hook_name not in self._hooks:
             self._hooks[hook_name] = []
         self._hooks[hook_name].append(handler)
 
     def trigger_hook(self, hook_name: str, *args, **kwargs):
-        """تشغيل خطاف"""
+        """Trigger hook"""
         for handler in self._hooks.get(hook_name, []):
             try:
                 handler(*args, **kwargs)
@@ -222,10 +222,10 @@ class PluginManager:
         }
 
 
-# ====== إضافات مدمجة ======
+# ====== Built-in plugins ======
 
 class LogPlugin(Plugin):
-    """إضافة تسجيل — تسجل كل نشاط"""
+    """Logging plugin — logs all activity"""
     meta = PluginMeta(
         name="log_plugin",
         version="1.0.0",
@@ -252,7 +252,7 @@ class LogPlugin(Plugin):
 
 
 class StatsPlugin(Plugin):
-    """إضافة إحصائيات — تجمع إحصائيات النظام"""
+    """Statistics plugin — collects system stats"""
     meta = PluginMeta(
         name="stats_plugin",
         version="1.0.0",
@@ -290,7 +290,7 @@ class StatsPlugin(Plugin):
 
 
 class BackupPlugin(Plugin):
-    """إضافة نسخ احتياطي"""
+    """Backup plugin"""
     meta = PluginMeta(
         name="backup_plugin",
         version="0.1.0",
@@ -324,7 +324,7 @@ class BackupPlugin(Plugin):
 if __name__ == "__main__":
     mgr = PluginManager()
 
-    # إضافات مدمجة
+    # Built-in plugins
     for plugin_cls in [LogPlugin, StatsPlugin, BackupPlugin]:
         inst = plugin_cls()
         inst.on_load()

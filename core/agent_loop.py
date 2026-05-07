@@ -2,8 +2,8 @@
 """
 AHS - Agent Loop
 =================
-الحلقة الرئيسية للنظام الهجين.
-تستقبل الأوامر → تصنف → تخطط → تنفذ → ترد.
+The main loop of the hybrid system.
+Receives commands → classifies → plans → executes → responds.
 """
 
 import json
@@ -13,7 +13,7 @@ import time
 import traceback
 from typing import Dict, List, Optional, Any
 
-# إضافة المسارات
+# Add paths
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.orchestrator import HybridOrchestrator, TaskType
@@ -23,8 +23,8 @@ from skills.synthesizer import ResponseSynthesizer
 
 class HybridAgent:
     """
-    الـ Agent الهجين الرئيسي.
-    يجمع OpenClaw + Hermes في حلقة واحدة.
+    The main hybrid Agent.
+    Combines OpenClaw + Hermes in a single loop.
     """
 
     def __init__(self):
@@ -36,21 +36,21 @@ class HybridAgent:
 
     def process(self, task: str, user_id: str = "user", hybrid: bool = False) -> Dict:
         """
-        معالجة مهمة خلال النظام الهجين.
+        Process a task through the hybrid system.
 
-        1. تحليل المهمة
-        2. التخطيط
-        3. تنفيذ الخطط (OpenClaw و/أو Hermes)
-        4. تجميع النتيجة
-        5. حفظ في الذاكرة
-        6. الرد
+        1. Analyze the task
+        2. Plan
+        3. Execute plans (OpenClaw and/or Hermes)
+        4. Compile the result
+        5. Save to memory
+        6. Respond
 
         Args:
-            hybrid: إذا True → يستخدم ResponseSynthesizer (OpenClaw + Hermes معاً)
+            hybrid: If True → uses ResponseSynthesizer (OpenClaw + Hermes together)
         """
         start_time = time.time()
 
-        # إذا hybrid → نستخدم الـ synthesizer
+        # If hybrid → use the synthesizer
         if hybrid:
             synth = ResponseSynthesizer()
             result = synth.synthesize(task)
@@ -65,11 +65,11 @@ class HybridAgent:
                 "stats": {"elapsed_seconds": result["elapsed"], "hermes_used": True},
             }
 
-        # الخطوة 1-2: تحليل وتخطيط
+        # Step 1-2: Analyze and plan
         classification = self.orchestrator.classify_task(task)
         plan = self.orchestrator.plan_execution(task, classification[0])
 
-        # الخطوة 3: التنفيذ
+        # Step 3: Execution
         execution_log = []
         final_response = ""
 
@@ -84,18 +84,18 @@ class HybridAgent:
                 "result": step_result,
             })
 
-            # إذا كان الـ step الأخير من OpenClaw والسابق Hermes
+            # If the last step is from OpenClaw and the previous from Hermes
             if assignee == "openclaw" and action in ["respond", "summarize", "synthesize"]:
                 final_response = step_result or self._openclaw_respond(task, execution_log)
 
-        # إذا ما حصلنا رد نهائي
+        # If we didn't get a final response
         if not final_response:
-            # نستخدم الـ synthesizer
+            # Use the synthesizer
             synth = ResponseSynthesizer()
             syn = synth.synthesize(task)
             final_response = syn["final"]
 
-        # الخطوة 5: حفظ في الذاكرة
+        # Step 5: Save to memory
         self.orchestrator.record_learning(
             key=f"task_{len(self.history)}",
             value={
@@ -105,7 +105,7 @@ class HybridAgent:
             }
         )
 
-        # إحصائيات
+        # Statistics
         elapsed = time.time() - start_time
 
         result = {
@@ -120,29 +120,29 @@ class HybridAgent:
             }
         }
 
-        # حفظ التاريخ
+        # Save history
         self.history.append(result)
 
         return result
 
     def _execute_step(self, action: str, assignee: str, task: str, log: List) -> Optional[str]:
-        """تنفيذ خطوة واحدة من الخطة"""
+        """Execute a single step of the plan"""
         try:
             if assignee == "hermes":
                 return self._hermes_execute(action, task, log)
             elif assignee == "openclaw":
-                return None  # OpenClaw يتولى الرد مباشرة
+                return None  # OpenClaw handles the response directly
         except Exception as e:
-            return f"⚠️ خطأ في التنفيذ: {str(e)}"
+            return f"⚠️ Execution error: {str(e)}"
         return None
 
     def _hermes_execute(self, action: str, task: str, log: List) -> str:
-        """تنفيذ خطوة عبر Hermes مع وضع التفكير"""
-        # مهم: نستخدم صيغة بسيطة لا تحفز Hermes على استخدام أدوات غير متاحة
+        """Execute a step via Hermes with thinking mode"""
+        # Important: use a simple format that doesn't prompt Hermes to use unavailable tools
         hermes_task = (
-            f"فكر في هذا السؤال وأجب فقط:\n"
-            f"السؤال: {task}\n\n"
-            f"قدم إجابة مباشرة ومفيدة."
+            f"Think about this question and answer only:\n"
+            f"Question: {task}\n\n"
+            f"Provide a direct and helpful answer."
         )
 
         result = self.hermes.send_task(
@@ -157,15 +157,15 @@ class HybridAgent:
             content = response.get("content", "")
             reasoning = response.get("reasoning", "")
             if reasoning:
-                return f"[تفكير Hermes]\n{reasoning[:300]}\n\n[الرد]\n{content[:500]}"
+                return f"[Hermes Thinking]\n{reasoning[:300]}\n\n[Response]\n{content[:500]}"
             return content[:500]
         else:
-            return f"⚠️ Hermes: {result.get('error', 'فشل غير معروف')}"
+            return f"⚠️ Hermes: {result.get('error', 'Unknown failure')}"
 
     def _openclaw_respond(self, task: str, log: List) -> str:
-        """OpenClaw يرد مباشرة (أنا)"""
-        # هذه الدالة تستدعى من OpenClaw نفسه
-        # الرد يكتب هنا كملاذ أخير
+        """OpenClaw responds directly (me)"""
+        # This function is called from OpenClaw itself
+        # The response is written here as a last resort
         has_hermes = any(e.get("by") == "hermes" for e in log)
         hermes_outputs = [
             e["result"] for e in log
@@ -178,7 +178,7 @@ class HybridAgent:
             return self._direct_response(task)
 
     def _direct_response(self, task: str) -> str:
-        """رد مباشر من OpenClaw لمهام بسيطة"""
+        """Direct response from OpenClaw for simple tasks"""
         task_lower = task.lower()
 
         greetings = ["مرحبا", "hello", "hi", "اهلا", "السلام"]
@@ -199,7 +199,7 @@ class HybridAgent:
         return f"تم استلام المهمة. سأحللها مع Hermes وأعود لك بالنتيجة."
 
     def status(self) -> Dict:
-        """حالة النظام"""
+        """System status"""
         return {
             "name": self.name,
             "version": self.version,
@@ -210,7 +210,7 @@ class HybridAgent:
         }
 
 
-# اختبار
+# Test
 if __name__ == "__main__":
     agent = HybridAgent()
 

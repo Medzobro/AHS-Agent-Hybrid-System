@@ -4,12 +4,12 @@ AHS - Logging System
 =====================
 نظام تسجيل شامل — يسجل كل شيء في النظام.
 
-المميزات:
-  - تسجيل بملفات
-  - تسجيل بالذاكرة (للتشغيل السريع)
-  - مستويات: DEBUG, INFO, WARNING, ERROR, CRITICAL
-  - تصدير وتحميل
-  - فلاتر وبحث
+Features:
+  - File logging
+  - In-memory logging (for fast operation)
+  - Levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  - Export and load
+  - Filters and search
 """
 
 import json, os, sys, time, logging, traceback
@@ -45,7 +45,7 @@ class LogLevel(Enum):
 
 @dataclass
 class LogEntry:
-    """إدخال سجل واحد"""
+    """Single log entry"""
     timestamp: float = field(default_factory=time.time)
     level: LogLevel = LogLevel.INFO
     component: str = "system"
@@ -83,7 +83,7 @@ class LogEntry:
 
 
 class LogStorage:
-    """تخزين السجلات"""
+    """Log storage"""
 
     def __init__(self, max_entries: int = 1000):
         self.entries: List[LogEntry] = []
@@ -139,12 +139,12 @@ class LogStorage:
 
 class AHSLogger:
     """
-    المسجل الرئيسي — يسجل كل شيء في النظام.
+    Main logger — logs everything in the system.
 
-    الاستخدام:
-      logger = AHSLogger()
-      logger.info("System started", component="system")
-      logger.error("Failed", component="hermes", data=error)
+    Usage:
+      
+      
+      
     """
 
     def __init__(self, name: str = "ahs",
@@ -244,7 +244,7 @@ class AHSLogger:
 # ====== أمثلة ======
 
 def create_default_logger(log_dir: str = "logs") -> AHSLogger:
-    """إنشاء المسجل الافتراضي"""
+    """Create the default logger"""
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, "ahs.log")
     return AHSLogger(
@@ -256,7 +256,7 @@ def create_default_logger(log_dir: str = "logs") -> AHSLogger:
 
 
 class LoggerAdapter:
-    """محوّل: يربط الـ Logger مع المكونات المختلفة"""
+    """Adapter: connects Logger with different components"""
 
     def __init__(self, logger: AHSLogger, component: str):
         self.logger = logger

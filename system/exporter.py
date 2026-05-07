@@ -4,11 +4,11 @@ AHS - Data Exporter
 ====================
 تصدير البيانات من النظام إلى صيغ مختلفة.
 
-المميزات:
-  - تصدير JSON, CSV, Markdown, HTML, Text
-  - تحويل البيانات
-  - تقارير منسقة
-  - حفظ تلقائي
+Features:
+  - Export JSON, CSV, Markdown, HTML, Text
+  - Data conversion
+  - Formatted reports
+  - Auto-save
 """
 
 import json, os, sys, time, csv, io
@@ -18,7 +18,7 @@ from datetime import datetime
 
 
 class Exporter:
-    """تصدير البيانات إلى صيغ مختلفة"""
+    """Export data to different formats"""
 
     @staticmethod
     def json(data: Any, path: Optional[str] = None, pretty: bool = True) -> str:
@@ -146,7 +146,7 @@ class Exporter:
 
 
 class ReportBuilder:
-    """بناء التقارير بطريقة منظمة"""
+    """Build reports in an organized way"""
     def __init__(self, title: str = "AHS Report"):
         self.title = title
         self.sections = []
@@ -188,7 +188,7 @@ class ReportBuilder:
 
 
 class BatchProcessor:
-    """معالجة دفعية للتصدير"""
+    """Batch export processing"""
     def __init__(self, output_dir: str = "exports"):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -219,7 +219,7 @@ class BatchProcessor:
 
 
 if __name__ == "__main__":
-    # اختبار
+    # Test
     data = [
         {"name": "AHS", "version": "0.2.0", "language": "Python"},
         {"name": "OpenClaw", "version": "latest", "language": "Go"},

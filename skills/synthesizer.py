@@ -1,7 +1,7 @@
 """
 AHS - Response Synthesizer
 =============================
-يجمع بين OpenClaw (سريع) و Hermes (عميق) في رد واحد متكامل.
+Combines OpenClaw (fast) and Hermes (deep) into one integrated response.
 """
 
 import json, os, sys, time

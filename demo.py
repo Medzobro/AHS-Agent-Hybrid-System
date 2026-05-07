@@ -2,8 +2,8 @@
 """
 AHS - Hybrid Demo
 ==================
-عرض تفاعلي يوضح كيف OpenClaw + Hermes يشتغلون معاً.
-يشغل 3 سيناريوهات مختلفة ويعرض التدفق خطوة بخطوة.
+Interactive demo showing how OpenClaw + Hermes work together.
+Runs 3 different scenarios and shows the flow step by step.
 """
 
 import json, os, sys, time
@@ -28,18 +28,18 @@ def print_step(emoji: str, actor: str, msg: str):
 
 def demo_scenario(name: str, task: str, flow_type: str):
     print(f"\n{'='*50}")
-    print(f" {BOLD}📋 السيناريو: {name}{RESET}")
+    print(f" {BOLD}📋 Scenario: {name}{RESET}")
     print(f" {'='*50}")
-    print(f" 📥 المهمة: \"{task}\"\n")
+    print(f" 📥 Task: \"{task}\"\n")
 
     if flow_type == "code":
         # Code Assistant Demo
-        print_step("🤖", "OpenClaw", "أحلل الطلب...")
+        print_step("🤖", "OpenClaw", "Analyzing request...")
         time.sleep(0.5)
-        print_step("🤖", "OpenClaw", "أصنفه: طلب برمجة/كود")
-        print_step("🤖", "OpenClaw", "أخطط: Hermes يكتب الكود ← أنا أحفظه")
+        print_step("🤖", "OpenClaw", "Classifying: programming/code request")
+        print_step("🤖", "OpenClaw", "Planning: Hermes writes code ← I save it")
         time.sleep(0.5)
-        print_step("🧠", "Hermes", "يكتب الكود... (DeepSeek R1)")
+        print_step("🧠", "Hermes", "Writing code... (DeepSeek R1)")
         
         c = CodeAssistant()
         start = time.time()
@@ -47,18 +47,18 @@ def demo_scenario(name: str, task: str, flow_type: str):
         elapsed = time.time() - start
         
         if r["success"]:
-            print_step("🤖", "OpenClaw", f"أستلم الكود ({r['lines']} سطر)")
-            print_step("🤖", "OpenClaw", f"أحفظه في {r['filename']}")
-            print_step("✅", "AHS", f"تم! ⏱ {r['elapsed']}s")
-            print(f"\n  📄 {GREEN}مقتطف من الكود:{RESET}")
+            print_step("🤖", "OpenClaw", f"Received code ({r['lines']} lines)")
+            print_step("🤖", "OpenClaw", f"Saving to {r['filename']}")
+            print_step("✅", "AHS", f"Done! ⏱ {r['elapsed']}s")
+            print(f"\n  📄 {GREEN}Code snippet:{RESET}")
             for line in r["code"].strip().split("\n")[:5]:
                 print(f"    {line}")
         else:
-            print_step("❌", "AHS", f"خطأ: {r.get('error')}")
+            print_step("❌", "AHS", f"Error: {r.get('error')}")
 
     elif flow_type == "flow":
         # Hybrid Flow Demo
-        print_step("🤖", "OpenClaw", "أحلل المهمة وأخطط للتدفق...")
+        print_step("🤖", "OpenClaw", "Analyzing task and planning flow...")
         time.sleep(0.5)
         
         f = HybridFlow()
@@ -66,61 +66,61 @@ def demo_scenario(name: str, task: str, flow_type: str):
         r = f.run(task)
         elapsed = time.time() - start
         
-        print(f"\n  {BOLD}📊 سجل التدفق:{RESET}")
+        print(f"\n  {BOLD}📊 Flow log:{RESET}")
         for s in r["log"]:
             emoji = "🤖" if s["actor"] == "openclaw" else "🧠"
             print(f"    {emoji} {s['actor']} → {s['action']}")
         
         print(f"\n  📤 {GREEN}{r['final'][:300]}{RESET}")
-        print(f"\n  ⏱ {r['elapsed']}s | {r['steps']} خطوات | نوع: {r['flow_type']}")
+        print(f"\n  ⏱ {r['elapsed']}s | {r['steps']} steps | Type: {r['flow_type']}")
 
     elif flow_type == "hybrid":
         # Response Synthesizer Demo
-        print_step("🤖", "OpenClaw", "أفهم السياق فوراً...")
+        print_step("🤖", "OpenClaw", "Understanding context immediately...")
         time.sleep(0.3)
-        print_step("🧠", "Hermes", "أفكر عميقاً... (DeepSeek R1)")
+        print_step("🧠", "Hermes", "Thinking deeply... (DeepSeek R1)")
         
         s = ResponseSynthesizer()
         start = time.time()
         r = s.synthesize(task)
         elapsed = time.time() - start
         
-        print(f"\n  {BOLD}🔬 التحليل:{RESET}")
-        print(f"    🤖 OpenClaw صنّف: {r['openclaw']}")
-        print(f"    🧠 Hermes فكر: {r['hermes'][:100]}...")
+        print(f"\n  {BOLD}🔬 Analysis:{RESET}")
+        print(f"    🤖 OpenClaw classified: {r['openclaw']}")
+        print(f"    🧠 Hermes thought: {r['hermes'][:100]}...")
         print(f"\n  📤 {GREEN}{r['final'][:300]}{RESET}")
-        print(f"\n  ⏱ {r['elapsed']}s | وضع Hybrid")
+        print(f"\n  ⏱ {r['elapsed']}s | Hybrid mode")
 
 
 def main():
     print(f"\n{BOLD}{'='*50}{RESET}")
-    print(f" {BOLD}{CYAN}🎬 AHS Hybrid Agent — العروض التفاعلية{RESET}")
-    print(f" {BOLD}   OpenClaw + Hermes يتعاونون{RESET}")
+    print(f" {BOLD}{CYAN}🎬 AHS Hybrid Agent — Interactive Demos{RESET}")
+    print(f" {BOLD}   OpenClaw + Hermes Collaborating{RESET}")
     print(f"{BOLD}{'='*50}{RESET}")
 
-    # سيناريو 1: كود
+    # Scenario 1: Code
     demo_scenario(
-        "كتابة كود Python",
-        "دالة ترجع مجموع رقمين",
+        "Writing Python Code",
+        "Function that returns sum of two numbers",
         "code"
     )
 
-    # سيناريو 2: تدفق هجين
+    # Scenario 2: Hybrid Flow
     demo_scenario(
-        "التدفق الهجين الكامل",
-        "عطني مثال AI Agent بسيط",
+        "Full Hybrid Flow",
+        "Give me a simple AI Agent example",
         "flow"
     )
 
-    # سيناريو 3: Hybrid Synthesizer
+    # Scenario 3: Hybrid Synthesizer
     demo_scenario(
-        "الوضع الهجين (Hybrid Mode)",
-        "لخص الـ AI Agent في جملة",
+        "Hybrid Mode",
+        "Summarize the AI Agent in one sentence",
         "hybrid"
     )
 
     print(f"\n{BOLD}{GREEN}{'='*50}{RESET}")
-    print(f" {BOLD}{GREEN}✅ 3 سيناريوهات كاملة!{RESET}")
+    print(f" {BOLD}{GREEN}✅ 3 Complete Scenarios!{RESET}")
     print(f" {BOLD}🔗 https://github.com/Medzobro/AHS-Agent-Hybrid-System{RESET}")
     print(f"{BOLD}{GREEN}{'='*50}{RESET}\n")
 

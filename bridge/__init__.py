@@ -1,21 +1,21 @@
 """
 AHS - Bridge Package
 =====================
-جسر التواصل مع Hermes AI Agent للتفكير العميق.
+Communication bridge with Hermes AI Agent for deep reasoning.
 
-المكونات:
-  - hermes_bridge: اتصال مع Hermes عبر CLI أو API
+Components:
+  - hermes_bridge: Connects to Hermes via CLI or API
 
-يدعم:
-  - DeepSeek R1 (deepseek-reasoner) مع reasoning_content
-  - OpenRouter (أي نموذج متاح)
-  - استخراج الرد من أحدث session
-  - Shared Memory للتنسيق
+Supports:
+  - DeepSeek R1 (deepseek-reasoner) with reasoning_content
+  - OpenRouter (any available model)
+  - Latest session response extraction
+  - Shared Memory for coordination
 
-الاستخدام:
+Usage:
   from bridge.hermes_bridge import HermesBridge
   bridge = HermesBridge()
-  result = bridge.send_task("ما هو الذكاء الاصطناعي؟")
+  result = bridge.send_task("What is artificial intelligence?")
 """
 
 from .hermes_bridge import HermesBridge

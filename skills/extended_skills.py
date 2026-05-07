@@ -2,19 +2,19 @@
 """
 AHS - Extended Skills
 ======================
-مهارات هجينة إضافية — توسع قدرات AHS.
+Additional hybrid skills — extending AHS capabilities.
 
-المهارات:
-  - Code Generator: يولد كوداً من الوصف
-  - Text Analyzer: يحلل النصوص
-  - Task Planner: يخطط المهام
-  - Data Reporter: يولد تقارير
-  - System Optimizer: يحسن الأداء
-  - File Organizer: ينظم الملفات
-  - Web Scraper: يجمع بيانات
-  - Translation Helper: يساعد في الترجمة
-  - Command Builder: يبني أوامر
-  - Knowledge Extractor: يستخرج المعرفة
+Skills:
+  - Code Generator: Generates code from description
+  - Text Analyzer: Analyzes texts
+  - Task Planner: Plans tasks
+  - Data Reporter: Generates reports
+  - System Optimizer: Optimizes performance
+  - File Organizer: Organizes files
+  - Web Scraper: Collects data
+  - Translation Helper: Helps with translation
+  - Command Builder: Builds commands
+  - Knowledge Extractor: Extracts knowledge
 """
 
 import json, os, sys, time, re
@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 
 class SkillBase:
-    """فئة أساسية للمهارات"""
+    """Base class for skills"""
     def __init__(self, name: str, description: str, category: str = "general"):
         self.name = name
         self.description = description
@@ -50,7 +50,7 @@ class SkillBase:
 # =========================
 
 class CodeGenerator(SkillBase):
-    """يولد كوداً من وصف طبيعي"""
+    """Generates code from natural language description"""
     TEMPLATES = {
         "python": {
             "script": """#!/usr/bin/env python3
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     }
 
     def __init__(self):
-        super().__init__("code_generator", "توليد كود من الوصف", "code")
+        super().__init__("code_generator", "Generate code from description", "code")
 
     def execute(self, description: str = "", language: str = "python",
                 template: str = "script", **kwargs) -> Dict:
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         }
 
     def _generate_skeleton(self, description: str, language: str) -> List[str]:
-        """توليد هيكل الكود الأساسي من الوصف"""
+        """Generate basic code skeleton from description"""
         desc_lower = description.lower()
         lines = ["    # TODO: Implement this function"]
 
@@ -207,9 +207,9 @@ if __name__ == "__main__":
 # =========================
 
 class TextAnalyzer(SkillBase):
-    """تحليل النصوص واستخراج المعلومات"""
+    """Analyze texts and extract information"""
     def __init__(self):
-        super().__init__("text_analyzer", "تحليل النصوص واستخراج المعلومات", "text")
+        super().__init__("text_analyzer", "Analyze texts and extract information", "text")
 
     def execute(self, text: str = "", analysis_type: str = "basic", **kwargs) -> Dict:
         result = {"text": text[:100], "type": analysis_type}
@@ -287,9 +287,9 @@ class TextAnalyzer(SkillBase):
 # =========================
 
 class TaskPlanner(SkillBase):
-    """تخطيط المهام وتقسيمها إلى خطوات"""
+    """Plan tasks and break them into steps"""
     def __init__(self):
-        super().__init__("task_planner", "تخطيط المهام وتقسيمها", "planning")
+        super().__init__("task_planner", "Task planning وتقسيمها", "planning")
 
     def execute(self, task: str = "", complexity: str = "medium", **kwargs) -> Dict:
         steps = self._generate_plan(task, complexity)
@@ -370,9 +370,9 @@ class TaskPlanner(SkillBase):
 # =========================
 
 class DataReporter(SkillBase):
-    """توليد تقارير من البيانات"""
+    """Generate reports from data"""
     def __init__(self):
-        super().__init__("data_reporter", "توليد التقارير", "data")
+        super().__init__("data_reporter", "Report generation", "data")
 
     def execute(self, data: Any = None, title: str = "Report",
                 format: str = "text", **kwargs) -> Dict:
@@ -415,9 +415,9 @@ class DataReporter(SkillBase):
 # =========================
 
 class CommandBuilder(SkillBase):
-    """بناء أوامر shell معقدة"""
+    """Build shell commands معقدة"""
     def __init__(self):
-        super().__init__("command_builder", "بناء أوامر shell", "tools")
+        super().__init__("command_builder", "Build shell commands", "tools")
 
     def execute(self, description: str = "", os_type: str = "linux", **kwargs) -> Dict:
         desc = description.lower()

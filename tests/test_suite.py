@@ -2,15 +2,15 @@
 """
 AHS - Test Suite
 =================
-اختبارات شاملة لجميع مكونات النظام.
+Comprehensive tests for all system components.
 
-يغطي:
-  - المكونات الأساسية (Core Components)
-  - الجسر (Bridge)
-  - المهارات (Skills)
-  - النظام (System)
-  - التكامل (Integration)
-  - الأداء (Performance)
+Covers:
+  - Core Components
+  - Bridge
+  - Skills
+  - System
+  - Integration
+  - Performance
 """
 
 import json, os, sys, time, uuid, unittest, tempfile
@@ -22,7 +22,7 @@ from contextlib import redirect_stdout
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # ===========================
-#  مصفوفة الاختبارات TestMatrix
+#  Test Matrix
 # ===========================
 
 class TestResult:
@@ -45,7 +45,7 @@ class TestResult:
 
 
 class TestCase:
-    """حالة اختبار واحدة"""
+    """A single test case"""
     def __init__(self, name: str, category: str):
         self.name = name
         self.category = category
@@ -62,7 +62,7 @@ class TestCase:
 
 
 class TestSuite:
-    """مجموعة اختبارات"""
+    """A collection of tests"""
     def __init__(self, name: str):
         self.name = name
         self.tests: List[TestCase] = []
@@ -104,7 +104,7 @@ class TestSuite:
 
 
 class TestRunner:
-    """مدير تشغيل الاختبارات"""
+    """Test runner manager"""
     def __init__(self):
         self.suites: List[TestSuite] = []
 
@@ -135,7 +135,7 @@ class TestRunner:
         }
 
     def run_and_report(self) -> str:
-        """تشغيل وإظهار التقرير"""
+        """Run and display the report"""
         result = self.run()
         lines = [
             "═══════════════════════════════════",
@@ -170,10 +170,10 @@ class TestOrchestrator(TestCase):
         o = HybridOrchestrator()
 
         test_cases = {
-            "قل مرحبا": TaskType.QUICK,
-            "ابحث عن AI": TaskType.DEEP,
-            "اكتب كود": TaskType.CODE,
-            "نفذ الأمر": TaskType.COMMAND,
+            "say hello": TaskType.QUICK,
+            "search for AI": TaskType.DEEP,
+            "write code": TaskType.CODE,
+            "execute command": TaskType.COMMAND,
         }
 
         passed = 0
@@ -227,7 +227,7 @@ class TestAgentLoop(TestCase):
         agent = HybridAgent()
 
         # Quick task
-        result = agent.process("من أنت")
+        result = agent.process("Who are you")
         if not result.get("response"):
             return TestResult(self.name, False, "No response from agent")
 
@@ -402,7 +402,7 @@ class TestSynthesizer(TestCase):
         s = ResponseSynthesizer()
 
         # Test quick analysis (without API)
-        analysis = s._openclaw_quick("من أنت")
+        analysis = s._openclaw_quick("Who are you")
         if not analysis:
             return TestResult(self.name, False, "Quick analysis failed")
 
@@ -448,10 +448,10 @@ class TestAutoMode(TestCase):
         ahs = AHSIntegration()
 
         test_cases = {
-            "code": "اكتب كود Python",
-            "deep": "ابحث عن AI",
-            "quick": "مرحبا",
-            "flow": "أ" * 250,
+            "code": "write Python code",
+            "deep": "search for AI",
+            "quick": "hello",
+            "flow": "a" * 250,
         }
 
         results = []
@@ -589,11 +589,11 @@ class TestErrorHandling(TestCase):
 
 
 # ===========================
-#  إنشاء وتشغيل كل الاختبارات
+#  Create and run all tests
 # ===========================
 
 def create_full_test_suite() -> TestRunner:
-    """إنشاء مجموعة الاختبارات الكاملة"""
+    """Create the complete test suite"""
     runner = TestRunner()
 
     # Core
@@ -642,13 +642,13 @@ def create_full_test_suite() -> TestRunner:
 
 
 def run_tests(verbose: bool = False) -> Dict:
-    """تشغيل كل الاختبارات"""
+    """Run all tests"""
     runner = create_full_test_suite()
     return runner.run()
 
 
 def run_tests_and_report() -> str:
-    """تشغيل وعرض التقرير"""
+    """Run and display the report"""
     runner = create_full_test_suite()
     return runner.run_and_report()
 

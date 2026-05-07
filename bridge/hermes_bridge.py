@@ -2,8 +2,8 @@
 """
 AHS - Hermes Bridge
 ====================
-جسر متطور بين OpenClaw و Hermes
-يتواصل عبر MCP protocol + subprocess مع وضع التفكير
+Advanced bridge between OpenClaw and Hermes
+Communicates via MCP protocol + subprocess with thinking mode
 """
 
 import json
@@ -17,12 +17,12 @@ from typing import Dict, List, Optional, Any
 
 class HermesBridge:
     """
-    جسر متطور للتواصل مع Hermes.
-    يدعم:
-    - إرسال مهام مع وضع التفكير (deepseek-reasoner)
-    - استقبال الردود
-    - إدارة الجلسات
-    - تفعيل مهارات محددة
+    Advanced bridge for communicating with Hermes.
+    Supports:
+    - Sending tasks with thinking mode (deepseek-reasoner)
+    - Receiving responses
+    - Session management
+    - Activating specific skills
     """
 
     def __init__(self):
@@ -34,14 +34,14 @@ class HermesBridge:
         self.last_session: Optional[str] = None
 
     def _get_latest_session(self) -> Optional[str]:
-        """الحصول على آخر جلسة Hermes (حسب وقت التعديل)"""
+        """Get the latest Hermes session (by modification time)"""
         try:
             sessions = [
                 f for f in os.listdir(self.session_dir)
                 if f.endswith(".json") and not f.startswith("session_cron")
             ]
             if sessions:
-                # أحدثها حسب وقت التعديل
+                # Latest by modification time
                 sessions.sort(
                     key=lambda f: os.path.getmtime(os.path.join(self.session_dir, f)),
                     reverse=True
@@ -60,21 +60,21 @@ class HermesBridge:
         context: Optional[List[Dict]] = None
     ) -> Dict:
         """
-        إرسال مهمة إلى Hermes مع وضع التفكير.
+        Send a task to Hermes with thinking mode.
 
         Args:
-            task: المهمة
-            skills: المهارات المفعلة
-            timeout: مهلة الانتظار بالثواني
-            thinking_mode: تشغيل وضع التفكير (deepseek-reasoner)
+            task: The task
+            skills: Activated skills
+            timeout: Timeout in seconds
+            thinking_mode: Enable thinking mode (deepseek-reasoner)
 
         Returns:
-            نتيجة المهمة
+            Task result
         """
-        # سجل الـ sessions قبل
+        # Record sessions before
         before_session = self._get_latest_session()
 
-        # بناء الأمر
+        # Build command
         cmd = [
             self.hermes_path, "chat",
             "--query", task,
@@ -85,7 +85,7 @@ class HermesBridge:
             cmd.extend(["-m", "deepseek-reasoner"])
 
         try:
-            # تشغيل Hermes
+            # Run Hermes
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -94,16 +94,16 @@ class HermesBridge:
                 timeout=timeout
             )
 
-            # انتظر لحظة عشان session يكتب
+            # Wait a moment for session to be written
             time.sleep(2)
 
-            # نجيب أحدث session (غير الجلسة القديمة)
+            # Get the latest session (not the old one)
             after_session = self._get_latest_session()
             
-            # نستخرج الـ session ID من المخرجات إذا ما لقينا session جديد
+            # Extract session ID from output if no new session found
             session_to_read = after_session or before_session
             if after_session and after_session == before_session:
-                # حاول نستخرج من stdout
+                # Try to extract from stdout
                 import re
                 match = re.search(r'--resume (\S+)', result.stdout)
                 if match:
@@ -111,9 +111,9 @@ class HermesBridge:
 
             response_data = self._extract_response(session_to_read)
 
-            # إذا فارغ والـ stdout فيه رد، نستخدمه
+            # If empty and stdout has a response, use it
             if not response_data.get('content') and result.stdout:
-                # نستخرج الرد من بعد آخر ╭─ 
+                # Extract response after the last ╭─ 
                 lines = result.stdout.split('\n')
                 in_response = False
                 response_lines = []
@@ -129,7 +129,7 @@ class HermesBridge:
                             response_lines.append(cleaned)
                 
                 if response_lines:
-                    # في حالة الرد السريع، المحتوى موجود في stdout
+                    # In case of quick response, content is in stdout
                     response_data['content_raw'] = '\n'.join(response_lines)
 
             return {
@@ -142,7 +142,7 @@ class HermesBridge:
         except subprocess.TimeoutExpired:
             return {
                 "success": False,
-                "error": "انتهت المهلة الزمنية",
+                "error": "Timeout expired",
                 "session": self._get_latest_session(),
             }
         except Exception as e:
@@ -152,13 +152,13 @@ class HermesBridge:
             }
 
     def _extract_response(self, session_file: Optional[str]) -> Dict:
-        """استخراج الرد من الجلسة"""
+        """Extract response from session"""
         if not session_file:
             return {"content": "", "reasoning": ""}
 
         session_path = os.path.join(self.session_dir, session_file)
         if not os.path.exists(session_path):
-            # جرب البحث عن آخر session
+            # Try searching for the latest session
             session_file = self._get_latest_session()
             if session_file:
                 session_path = os.path.join(self.session_dir, session_file)
@@ -194,12 +194,12 @@ class HermesBridge:
             return {"error": str(e)}
 
     def analyze_with_hermes(self, task: str) -> Dict:
-        """تحليل عميق مع Hermes (وضع التفكير)"""
+        """Deep analysis with Hermes (thinking mode)"""
         enhanced_task = (
-            f"[تحليل عميق مع التفكير]\n"
-            f"المهمة: {task}\n\n"
-            f"حلل هذه المهمة بعمق. فكر خطوة بخطوة.\n"
-            f"قدم: تحليل → حل مقترح → خطة تنفيذ"
+            f"[Deep analysis with thinking]\n"
+            f"Task: {task}\n\n"
+            f"Analyze this task deeply. Think step by step.\n"
+            f"Provide: analysis → proposed solution → execution plan"
         )
         return self.send_task(
             task=enhanced_task,
@@ -208,20 +208,20 @@ class HermesBridge:
         )
 
 
-# اختبار
+# Test
 if __name__ == "__main__":
     bridge = HermesBridge()
 
-    print("🧪 اختبار جسر Hermes...")
+    print("🧪 Testing Hermes bridge...")
     result = bridge.send_task(
-        "قل فقط: الجسر شغال",
+        "Just say: The bridge is working",
         thinking_mode=True
     )
 
     if result["success"]:
         response = result.get("response", {})
-        print(f"✅ الرد: {response.get('content', '')[:200]}")
+        print(f"✅ Response: {response.get('content', '')[:200]}")
         if response.get("reasoning"):
-            print(f"🤔 التفكير: {response['reasoning'][:200]}")
+            print(f"🤔 Thinking: {response['reasoning'][:200]}")
     else:
-        print(f"❌ خطأ: {result.get('error')}")
+        print(f"❌ Error: {result.get('error')}")

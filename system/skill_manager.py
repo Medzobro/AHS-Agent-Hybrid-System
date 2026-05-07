@@ -2,9 +2,9 @@
 """
 AHS - Skill Manager
 ====================
-إدارة المهارات — تثبيت، تفعيل، تعطيل، بحث.
+Skill Manager — install, enable, disable, search.
 
-كل مهارة هي ملف .py في مجلد skills/ يمثل قدرة محددة.
+Each skill is a .py file in the skills/ folder representing a specific capability.
 """
 
 import json, os, sys, time, uuid, importlib, inspect
@@ -18,27 +18,27 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 
 class SkillCategory(Enum):
-    GENERAL = "general"           # مهارات عامة
-    CODE = "code"                 # برمجة
-    RESEARCH = "research"         # بحث
-    ANALYSIS = "analysis"         # تحليل
-    CREATIVE = "creative"         # إبداعية
-    PRODUCTIVITY = "productivity" # إنتاجية
-    SYSTEM = "system"             # نظام
-    COMMUNICATION = "comm"       # تواصل
-    LEARNING = "learning"         # تعلم
-    CUSTOM = "custom"             # مخصصة
+    GENERAL = "general"           # General skills
+    CODE = "code"                 # Programming
+    RESEARCH = "research"         # Research
+    ANALYSIS = "analysis"         # Analysis
+    CREATIVE = "creative"         # Creative
+    PRODUCTIVITY = "productivity" # Productivity
+    SYSTEM = "system"             # System
+    COMMUNICATION = "comm"       # Communication
+    LEARNING = "learning"         # Learning
+    CUSTOM = "custom"             # Custom
 
 
 @dataclass
 class Skill:
-    """مهارة قابلة للتحميل"""
+    """Loadable skill"""
     name: str
     description: str
     version: str
     category: SkillCategory
     module_path: str
-    entry_point: str  # اسم الدالة الرئيسية
+    entry_point: str  # Main function name
     author: str = "AHS"
     dependencies: List[str] = field(default_factory=list)
     requires_hermes: bool = False
@@ -64,7 +64,7 @@ class Skill:
 
 class SkillManager:
     """
-    مدير المهارات — يكتشف، يحمل، يشغل المهارات.
+    Skill Manager — discovers, loads, runs skills.
     """
 
     def __init__(self, skills_dir: Optional[str] = None):
@@ -78,11 +78,11 @@ class SkillManager:
         self.hermes_bridge = None
 
     def set_hermes_bridge(self, bridge):
-        """ربط جسر Hermes"""
+        """Attach Hermes bridge"""
         self.hermes_bridge = bridge
 
     def discover(self) -> List[Skill]:
-        """اكتشاف المهارات في مجلد skills/"""
+        """Discover skills in the skills/ folder"""
         skills_path = Path(self.skills_dir)
         if not skills_path.exists():
             return []
@@ -98,12 +98,12 @@ class SkillManager:
         return discovered
 
     def _inspect_file(self, filepath: Path) -> Optional[Skill]:
-        """فحص ملف مهارة واستخراج معلوماتها"""
+        """Inspect a skill file and extract its information"""
         try:
             content = filepath.read_text(encoding="utf-8")
             module_name = filepath.stem
 
-            # استخراج الوصف من docstring أو التعليقات
+            # Extract description from docstring or comments
             description = ""
             for line in content.splitlines()[:20]:
                 if line.strip().startswith('"""') and not description:
@@ -116,9 +116,9 @@ class SkillManager:
                     break
 
             if not description:
-                description = f"مهارة {module_name}"
+                description = f"Skill {module_name}"
 
-            # تحديد التصنيف من المحتوى
+            # Determine category from content
             category = SkillCategory.GENERAL
             content_lower = content.lower()
             if any(w in content_lower for w in ["research", "بحث", "learn", "تعلم"]):
@@ -143,7 +143,7 @@ class SkillManager:
             return None
 
     def load_all(self) -> int:
-        """تحميل كل المهارات المكتشفة"""
+        """Load all discovered skills"""
         discovered = self.discover()
         count = 0
         for skill in discovered:
@@ -151,11 +151,11 @@ class SkillManager:
                 self._skills[skill.name] = skill
                 count += 1
             except Exception as e:
-                print(f"⚠️ فشل تحميل {skill.name}: {e}")
+                print(f"⚠️ Failed to load {skill.name}: {e}")
         return count
 
     def load(self, skill_name: str) -> bool:
-        """تحميل مهارة محددة"""
+        """Load a specific skill"""
         if skill_name in self._skills:
             skill = self._skills[skill_name]
             if skill.loaded:
@@ -175,43 +175,43 @@ class SkillManager:
         return False
 
     def unload(self, skill_name: str):
-        """إلغاء تحميل مهارة"""
+        """Unload a skill"""
         if skill_name in self._skills:
             self._skills[skill_name].loaded = False
             self._skills[skill_name].module = None
 
     def execute(self, skill_name: str, **kwargs) -> Dict:
-        """تشغيل مهارة"""
+        """Run a skill"""
         start = time.time()
         skill = self._skills.get(skill_name)
 
         if not skill:
-            return {"success": False, "error": f"المهارة '{skill_name}' غير موجودة"}
+            return {"success": False, "error": f"Skill '{skill_name}' not found"}
         if not skill.enabled:
-            return {"success": False, "error": f"المهارة '{skill_name}' معطلة"}
+            return {"success": False, "error": f"Skill '{skill_name}' is disabled"}
 
-        # تحميل إذا لم تكن محملة
+        # Load if not loaded
         if not skill.loaded:
             loaded = self.load(skill_name)
             if not loaded:
-                # استخدام الوضع الأساسي: إرسال الطلب إلى Hermes
+                # Use basic mode: send request to Hermes
                 return self._execute_via_hermes(skill_name, kwargs)
 
         try:
             if skill.module:
-                # تشغيل الدالة الرئيسية
+                # Run the main function
                 func = getattr(skill.module, skill.entry_point, None)
                 if func and callable(func):
                     result = func(**kwargs)
                 else:
-                    # بحث عن أي دالة عامة
+                    # Search for any public function
                     for name, obj in inspect.getmembers(skill.module):
                         if callable(obj) and not name.startswith("_"):
                             if name == skill.entry_point or name == "run":
                                 result = obj(**kwargs)
                                 break
                     else:
-                        result = "المهارة لا تحتوي على دالة تشغيل"
+                        result = "Skill does not contain a run function"
             else:
                 result = self._execute_via_hermes(skill_name, kwargs)
 
@@ -236,11 +236,11 @@ class SkillManager:
             }
 
     def _execute_via_hermes(self, skill_name: str, kwargs: Dict) -> str:
-        """تنفيذ المهارة عبر Hermes"""
+        """Execute skill via Hermes"""
         if not self.hermes_bridge:
-            return "جسر Hermes غير متاح"
+            return "Hermes bridge not available"
 
-        task = f"نفذ مهارة {skill_name} بالمعطيات: {json.dumps(kwargs, ensure_ascii=False)}"
+        task = f"Execute skill {skill_name} with parameters: {json.dumps(kwargs, ensure_ascii=False)}"
         result = self.hermes_bridge.send_task(
             task=task,
             skills=skill_name,
@@ -250,11 +250,11 @@ class SkillManager:
 
         if result.get("success"):
             resp = result.get("response", {})
-            return resp.get("content", "") or resp.get("content_raw", "") or "تم"
-        return f"فشل: {result.get('error')}"
+            return resp.get("content", "") or resp.get("content_raw", "") or "Done"
+        return f"Failed: {result.get('error')}"
 
     def enable(self, skill_name: str) -> bool:
-        """تفعيل مهارة"""
+        """Enable a skill"""
         skill = self._skills.get(skill_name)
         if skill:
             skill.enabled = True
@@ -262,7 +262,7 @@ class SkillManager:
         return False
 
     def disable(self, skill_name: str) -> bool:
-        """تعطيل مهارة"""
+        """Disable a skill"""
         skill = self._skills.get(skill_name)
         if skill:
             skill.enabled = False
@@ -272,12 +272,12 @@ class SkillManager:
         return False
 
     def get(self, skill_name: str) -> Optional[Skill]:
-        """الحصول على مهارة"""
+        """Get a skill"""
         return self._skills.get(skill_name)
 
     def list(self, category: Optional[SkillCategory] = None,
              enabled_only: bool = True) -> List[Skill]:
-        """عرض المهارات"""
+        """List skills"""
         skills = self._skills.values()
         if enabled_only:
             skills = [s for s in skills if s.enabled]
@@ -286,7 +286,7 @@ class SkillManager:
         return sorted(skills, key=lambda s: s.name)
 
     def search(self, query: str) -> List[Skill]:
-        """بحث في المهارات"""
+        """Search skills"""
         query = query.lower()
         results = []
         for skill in self._skills.values():
@@ -297,7 +297,7 @@ class SkillManager:
         return results
 
     def get_stats(self) -> Dict:
-        """إحصائيات المهارات"""
+        """Skill statistics"""
         total = len(self._skills)
         loaded = sum(1 for s in self._skills.values() if s.loaded)
         enabled = sum(1 for s in self._skills.values() if s.enabled)
@@ -337,20 +337,20 @@ class SkillManager:
             self._execution_history = self._execution_history[-self.max_history:]
 
     def create_skill(self, name: str, code: str) -> bool:
-        """إنشاء ملف مهارة جديد"""
+        """Create a new skill file"""
         filepath = Path(self.skills_dir) / f"{name}.py"
         if filepath.exists():
             return False
         filepath.parent.mkdir(parents=True, exist_ok=True)
         filepath.write_text(code, encoding="utf-8")
-        # أضفها للسجل
+        # Add to registry
         skill = self._inspect_file(filepath)
         if skill:
             self._skills[skill.name] = skill
         return True
 
     def remove_skill(self, name: str) -> bool:
-        """حذف مهارة"""
+        """Delete a skill"""
         skill = self._skills.get(name)
         if not skill:
             return False
@@ -361,7 +361,7 @@ class SkillManager:
         return True
 
     def export_manifest(self) -> str:
-        """تصدير قائمة المهارات إلى JSON"""
+        """Export skill list to JSON"""
         return json.dumps(
             {n: s.to_dict() for n, s in self._skills.items()},
             indent=2, ensure_ascii=False
@@ -369,8 +369,8 @@ class SkillManager:
 
 
 def dump_skills_table(manager: SkillManager) -> str:
-    """عرض المهارات في جدول نصي"""
-    lines = ["# 🛠️ المهارات المتاحة", ""]
+    """Display skills in a text table"""
+    lines = ["# 🛠️ Available Skills", ""]
     for cat in SkillCategory:
         skills = manager.list(category=cat)
         if not skills:
@@ -380,7 +380,7 @@ def dump_skills_table(manager: SkillManager) -> str:
             status = "✅" if s.loaded else "⏳" if s.enabled else "❌"
             lines.append(f"- {status} **{s.name}** v{s.version}: {s.description}")
         lines.append("")
-    lines.append(f"\n📊 الإجمالي: {len(manager.list())} مهارات")
+    lines.append(f"\n📊 Total: {len(manager.list())} skills")
     return "\n".join(lines)
 
 
@@ -388,4 +388,4 @@ if __name__ == "__main__":
     mgr = SkillManager()
     count = mgr.load_all()
     print(dump_skills_table(mgr))
-    print(f"\n✅ تم تحميل {count} مهارات")
+    print(f"\n✅ Loaded {count} skills")

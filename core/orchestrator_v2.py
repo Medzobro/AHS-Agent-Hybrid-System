@@ -2,11 +2,11 @@
 """
 AHS - Orchestrator V2
 ======================
-التدفق متعدد الخطوات — OpenClaw و Hermes يتعاونون خطوة بخطوة.
+Multi-step flow — OpenClaw and Hermes collaborate step by step.
 
-بدلاً من "اسأل Hermes وخلاص"، هذا الأوركيستريتور يدير
-تدفقاً كاملاً:
-  OpenClaw → يفهم → يخطط → Hermes → يفكر → OpenClaw → ينفذ → يرد
+Instead of "just ask Hermes", this orchestrator manages
+a complete flow:
+  OpenClaw → understands → plans → Hermes → thinks → OpenClaw → executes → responds
 """
 
 import json, os, sys, time
@@ -17,8 +17,8 @@ from typing import Dict, List, Optional
 
 class HybridFlow:
     """
-    تدفق هجين متكامل بين OpenClaw و Hermes.
-    كل خطوة يحددها النظام حسب نوع المهمة.
+    Integrated hybrid flow between OpenClaw and Hermes.
+    Each step is determined by the system based on task type.
     """
 
     def __init__(self):
@@ -26,13 +26,13 @@ class HybridFlow:
         self.steps_log: List[Dict] = []
 
     def run(self, task: str) -> Dict:
-        """تشغيل التدفق الهجين الكامل"""
+        """Run the complete hybrid flow"""
         self.steps_log = []
         start = time.time()
 
         task_lower = task.lower()
 
-        # === تحديد نوع التدفق ===
+        # === Determine flow type ===
         if any(w in task_lower for w in ["كود", "برمج", "code", "python", "برنامج"]):
             flow_type = "code"
         elif any(w in task_lower for w in ["ابحث", "بحث", "what", "شرح", "معنى"]):
@@ -40,14 +40,14 @@ class HybridFlow:
         else:
             flow_type = "general"
 
-        # === OpenClaw: الخطوة 1 — فهم المهمة ===
-        self._log("openclaw", "understand", f"تحليل: {flow_type}")
+        # === OpenClaw: Step 1 — Understand task ===
+        self._log("openclaw", "understand", f"Analysis: {flow_type}")
 
-        # === OpenClaw: الخطوة 2 — تخطيط ===
+        # === OpenClaw: Step 2 — Plan ===
         plan = self._plan(flow_type, task)
-        self._log("openclaw", "plan", f"الخطة: {len(plan)} خطوات")
+        self._log("openclaw", "plan", f"Plan: {len(plan)} steps")
 
-        # === التنفيذ ===
+        # === Execution ===
         for i, step in enumerate(plan):
             actor = step["actor"]
             action = step["action"]
@@ -57,10 +57,10 @@ class HybridFlow:
             else:
                 result = self._openclaw_step(action, task, step)
 
-            self._log(actor, action, result[:100] if result else "تم")
+            self._log(actor, action, result[:100] if result else "Done")
             self.steps_log[-1]["full"] = result
 
-        # === OpenClaw: الخطوة الأخيرة — الرد ===
+        # === OpenClaw: Final step — Respond ===
         final = self._build_final_response()
 
         elapsed = time.time() - start
@@ -75,23 +75,23 @@ class HybridFlow:
         }
 
     def _plan(self, flow_type: str, task: str) -> List[Dict]:
-        """تخطيط الخطوات حسب نوع المهمة"""
+        """Plan steps based on task type"""
         if flow_type == "code":
             return [
-                {"actor": "hermes", "action": "write_code", "prompt": f"اكتب كود Python: {task}"},
+                {"actor": "hermes", "action": "write_code", "prompt": f"Write Python code: {task}"},
             ]
         elif flow_type == "research":
             return [
-                {"actor": "hermes", "action": "deep_think", "prompt": f"حلل واشرح: {task}"},
+                {"actor": "hermes", "action": "deep_think", "prompt": f"Analyze and explain: {task}"},
             ]
         else:
             return [
-                {"actor": "hermes", "action": "answer", "prompt": f"أجب: {task}"},
+                {"actor": "hermes", "action": "answer", "prompt": f"Answer: {task}"},
             ]
 
     def _hermes_step(self, action: str, task: str) -> str:
-        """تشغيل خطوة عبر Hermes"""
-        prompt = f"فكر وأجب بدقة:\n{task}"
+        """Execute step via Hermes"""
+        prompt = f"Think and answer accurately:\n{task}"
         result = self.hermes.send_task(
             task=prompt,
             skills="dogfood",
@@ -106,17 +106,17 @@ class HybridFlow:
         return f"[Hermes error: {result.get('error')}]"
 
     def _openclaw_step(self, action: str, task: str, step: Dict) -> str:
-        """OpenClaw ينفذ خطوة"""
+        """OpenClaw executes step"""
         if action == "understand":
-            return "تم فهم المهمة"
+            return "Task understood"
         elif action == "plan":
-            return f"تم تخطيط {step.get('plan_type', 'عام')}"
+            return f"Planned {step.get('plan_type', 'general')}"
         elif action == "save":
-            return "تم الحفظ"
-        return "تم"
+            return "Saved"
+        return "Done"
 
     def _build_final_response(self) -> str:
-        """بناء الرد النهائي من كل الخطوات"""
+        """Build final response from all steps"""
         hermes_outputs = [
             s.get("full", "")
             for s in self.steps_log
@@ -124,7 +124,7 @@ class HybridFlow:
         ]
 
         if not hermes_outputs:
-            return "🤝 **AHS** — تم تنفيذ المهمة"
+            return "🤝 **AHS** — Task completed"
 
         main = hermes_outputs[-1][:600]
         return f"🤝 **AHS Hybrid Agent**\n\n{main}"
@@ -138,7 +138,7 @@ class HybridFlow:
         })
 
     def show_log(self) -> str:
-        """عرض سجل الخطوات"""
+        """Display step log"""
         lines = []
         for s in self.steps_log:
             emoji = "🤖" if s["actor"] == "openclaw" else "🧠"

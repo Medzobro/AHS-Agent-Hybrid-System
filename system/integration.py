@@ -2,13 +2,13 @@
 """
 AHS - Integration Layer
 =========================
-طبقة التكامل التي تربط جميع مكونات AHS معاً.
+Integration layer that connects all AHS components together.
 
-توفر:
-  - واجهة موحدة لجميع الأنظمة
-  - تهيئة وتشغيل المكونات
-  - إدارة دورة الحياة
-  - نقطة دخول واحدة
+Provides:
+  - Unified interface for all systems
+  - Component initialization and startup
+  - Lifecycle management
+  - Single entry point
 """
 
 import json, os, sys, time, uuid, threading, logging
@@ -44,7 +44,7 @@ class SystemStatus(Enum):
 
 @dataclass
 class IntegrationStats:
-    """إحصائيات التكامل"""
+    """Integration statistics"""
     tasks_processed: int = 0
     hermes_calls: int = 0
     tools_called: int = 0
@@ -56,16 +56,16 @@ class IntegrationStats:
 
 class AHSIntegration:
     """
-    طبقة التكامل الرئيسية — تربط كل شيء معاً.
+    Main integration layer — connects everything together.
 
-    المكونات:
-      - Orchestrator: تصنيف وتخطيط
-      - HermesBridge: التواصل مع Hermes
-      - ToolRegistry: الأدوات
-      - SkillManager: المهارات
-      - MultiAgent: وكلاء متعددون
-      - ConfigManager: الإعدادات
-      - Doctor: الفحوصات الصحية
+    Components:
+      - Orchestrator: Classification and planning
+      - HermesBridge: Communication with Hermes
+      - ToolRegistry: Tools
+      - SkillManager: Skills
+      - MultiAgent: Multiple agents
+      - ConfigManager: Configuration
+      - Doctor: Health checks
     """
 
     def __init__(self):
@@ -87,7 +87,7 @@ class AHSIntegration:
         self._event_handlers: Dict[str, List[Callable]] = {}
 
     def initialize(self) -> Dict:
-        """تهيئة جميع مكونات النظام"""
+        """Initialize all system components"""
         self.status = SystemStatus.STARTING
         start = time.time()
         results = {}
@@ -179,7 +179,7 @@ class AHSIntegration:
         }
 
     def process(self, task: str, mode: str = "auto", **kwargs) -> Dict:
-        """معالجة مهمة باستخدام أفضل وضع"""
+        """Process task using best mode"""
         self.stats.tasks_processed += 1
 
         if mode == "auto":
@@ -205,7 +205,7 @@ class AHSIntegration:
             return {"response": f"❌ {e}", "mode": mode, "error": str(e)}
 
     def _auto_select_mode(self, task: str) -> str:
-        """اختيار الوضع الأنسب تلقائياً"""
+        """Auto-select best mode"""
         task_lower = task.lower()
 
         if any(w in task_lower for w in ["كود", "برمج", "code", "python", "برنامج"]):
@@ -220,11 +220,11 @@ class AHSIntegration:
         return "hybrid"
 
     def _process_quick(self, task: str) -> Dict:
-        """معالجة سريعة (OpenClaw فقط)"""
+        """Quick processing (OpenClaw only)"""
         return {"response": "✅ تم", "elapsed": 0.01}
 
     def _process_hybrid(self, task: str) -> Dict:
-        """معالجة هجينة (OpenClaw + Hermes)"""
+        """Hybrid processing (OpenClaw + Hermes)"""
         if not self.synth:
             return {"response": "⚠️ الوضع الهجين غير متاح"}
         result = self.synth.synthesize(task)
@@ -232,7 +232,7 @@ class AHSIntegration:
         return {"response": result["final"], "elapsed": result["elapsed"]}
 
     def _process_code(self, task: str) -> Dict:
-        """معالجة برمجية"""
+        """Code processing"""
         if not self.code:
             return {"response": "⚠️ مساعد البرمجة غير متاح"}
         result = self.code.write_code(task)
@@ -246,7 +246,7 @@ class AHSIntegration:
         return {"response": f"❌ {result.get('error')}"}
 
     def _process_deep(self, task: str) -> Dict:
-        """معالجة عميقة (Hermes)"""
+        """Deep processing (Hermes)"""
         if not self.hermes:
             return {"response": "⚠️ Hermes غير متاح"}
         result = self.hermes.send_task(task, thinking_mode=True)
@@ -256,7 +256,7 @@ class AHSIntegration:
         return {"response": content[:600], "elapsed": result.get("elapsed", 0)}
 
     def _process_flow(self, task: str) -> Dict:
-        """معالجة بتدفق متعدد الخطوات"""
+        """Multi-step flow processing"""
         if not self.multi_agent:
             return {"response": "⚠️ النظام متعدد الوكلاء غير متاح"}
         result = self.multi_agent.run_all()
@@ -264,13 +264,13 @@ class AHSIntegration:
         return {"response": f"✅ {result['completed']} مهام منجزة", "details": result}
 
     def health_check(self) -> Dict:
-        """فحص صحي كامل"""
+        """Full health check"""
         if not self.doctor:
             self.doctor = Doctor()
         return self.doctor.diagnose()
 
     def get_status(self) -> Dict:
-        """حالة النظام الكاملة"""
+        """Full system status"""
         config_summary = self.config.summary() if self.config else {}
 
         return {
@@ -307,19 +307,19 @@ class AHSIntegration:
         }
 
     def shutdown(self):
-        """إيقاف النظام"""
+        """Shutdown system"""
         self.status = SystemStatus.STOPPED
         self._emit("shutdown", {})
         logger.info("AHS shutdown complete")
 
     def on(self, event: str, handler: Callable):
-        """تسجيل مستمع لأحداث النظام"""
+        """Register system event listener"""
         if event not in self._event_handlers:
             self._event_handlers[event] = []
         self._event_handlers[event].append(handler)
 
     def _emit(self, event: str, data: Any):
-        """بث حدث"""
+        """Emit event"""
         for handler in self._event_handlers.get(event, []):
             try:
                 handler(data)
@@ -329,7 +329,7 @@ class AHSIntegration:
 
 def bootstrap() -> AHSIntegration:
     """
-    تهيئة وتشغيل النظام بالكامل.
+    Initialize and start the entire system.
     هذه الدالة تستخدم كنقطة دخول.
     """
     print("🤝 AHS Integration - Initializing...")
@@ -341,17 +341,17 @@ def bootstrap() -> AHSIntegration:
 
 
 def process_task(task: str, mode: str = "auto") -> str:
-    """معالجة مهمة (دالة سريعة للاستخدام المباشر)"""
+    """Process task (quick function for direct use)"""
     ahs = bootstrap()
     result = ahs.process(task, mode=mode)
     return result.get("response", str(result))
 
 
 if __name__ == "__main__":
-    # تهيئة
+    # Initialize
     ahs = bootstrap()
 
-    print("\n🧪 اختبار:")
+    print("\n🧪 Test:")
     tasks = [
         ("من أنت", "hybrid"),
         ("اكتب كود يقول مرحبا", "code"),
@@ -361,7 +361,7 @@ if __name__ == "__main__":
         result = ahs.process(task, mode=mode)
         print(f"📤 {result.get('response', '')[:200]}")
 
-    print("\n📊 الحالة:")
+    print("\n📊 Status:")
     status = ahs.get_status()
     for k, v in status.items():
         if not isinstance(v, dict):

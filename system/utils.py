@@ -4,7 +4,7 @@ AHS - Utilities & Helpers
 ===========================
 أدوات مساعدة متنوعة للنظام.
 
-المميزات:
+Features:
   - Text processing
   - Data validation
   - Format conversion
@@ -25,37 +25,37 @@ from collections import Counter
 # =========================
 
 class TextUtils:
-    """أدوات معالجة النصوص"""
+    """Text processing tools"""
 
     ARABIC_CHARS = set("ابتثجحخدذرزسشصضطظعغفقكلمنهويءؤإأآةىپچڤڨڭ")
 
     @staticmethod
     def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
-        """اقتطاع النص"""
+        """Truncate text"""
         if not text or len(text) <= max_length:
             return text or ""
         return text[:max_length - len(suffix)] + suffix
 
     @staticmethod
     def word_count(text: str) -> int:
-        """عدد الكلمات"""
+        """Word count"""
         return len(text.split())
 
     @staticmethod
     def char_count(text: str, count_spaces: bool = False) -> int:
-        """عدد الحروف"""
+        """Character count"""
         if count_spaces:
             return len(text)
         return len(text.replace(" ", ""))
 
     @staticmethod
     def line_count(text: str) -> int:
-        """عدد الأسطر"""
+        """Line count"""
         return len(text.splitlines())
 
     @staticmethod
     def contains_arabic(text: str) -> bool:
-        """هل يحتوي النص على حروف عربية؟"""
+        """Does text contain Arabic?"""
         for char in text:
             if '\u0600' <= char <= '\u06FF' or '\u0750' <= char <= '\u077F':
                 return True
@@ -63,7 +63,7 @@ class TextUtils:
 
     @staticmethod
     def contains_english(text: str) -> bool:
-        """هل يحتوي النص على حروف إنجليزية؟"""
+        """Does text contain English?"""
         for char in text:
             if char.isascii() and char.isalpha():
                 return True
@@ -71,31 +71,31 @@ class TextUtils:
 
     @staticmethod
     def remove_extra_spaces(text: str) -> str:
-        """إزالة المسافات الزائدة"""
+        """Remove extra spaces"""
         return ' '.join(text.split())
 
     @staticmethod
     def extract_code_blocks(text: str) -> List[Tuple[str, str]]:
-        """استخراج مقتطفات الكود من النص"""
+        """Extract code blocks from text"""
         pattern = r'```(\w*)\n(.*?)```'
         matches = re.findall(pattern, text, re.DOTALL)
         return [(lang.strip(), code.strip()) for lang, code in matches]
 
     @staticmethod
     def extract_links(text: str) -> List[str]:
-        """استخراج الروابط"""
+        """Extract links"""
         pattern = r'https?://[^\s<>"]+|www\.[^\s<>"]+'
         return re.findall(pattern, text)
 
     @staticmethod
     def word_frequency(text: str, top: int = 10) -> List[Tuple[str, int]]:
-        """أكثر الكلمات تكراراً"""
+        """Most frequent words"""
         words = re.findall(r'\w+', text.lower())
         return Counter(words).most_common(top)
 
     @staticmethod
     def similarity(text1: str, text2: str) -> float:
-        """نسبة التشابه بين نصين (Jaccard)"""
+        """Text similarity (Jaccard)"""
         set1 = set(text1.lower().split())
         set2 = set(text2.lower().split())
         if not set1 or not set2:
@@ -106,7 +106,7 @@ class TextUtils:
 
     @staticmethod
     def wrap(text: str, width: int = 80) -> str:
-        """تغليف النص (word wrap)"""
+        """Wrap text (word wrap)"""
         words = text.split()
         lines = []
         current = []
@@ -125,7 +125,7 @@ class TextUtils:
 
     @staticmethod
     def center(text: str, width: int = 80, fill: str = " ") -> str:
-        """توسيط النص"""
+        """Center text"""
         return text.center(width, fill)
 
 
@@ -134,11 +134,11 @@ class TextUtils:
 # =========================
 
 class DataUtils:
-    """أدوات معالجة البيانات"""
+    """Data processing tools"""
 
     @staticmethod
     def safe_get(data: Dict, *keys, default: Any = None) -> Any:
-        """الوصول الآمن إلى القيم المتداخلة"""
+        """Safe nested value access"""
         current = data
         for key in keys:
             if isinstance(current, dict):
@@ -151,12 +151,12 @@ class DataUtils:
 
     @staticmethod
     def batch_process(items: List, batch_size: int = 10) -> List[List]:
-        """تقسيم قائمة إلى دفعات"""
+        """Split list into batches"""
         return [items[i:i + batch_size] for i in range(0, len(items), batch_size)]
 
     @staticmethod
     def deduplicate(items: List, key: Optional[Callable] = None) -> List:
-        """إزالة التكرار"""
+        """Remove duplicates"""
         seen = set()
         result = []
         for item in items:
@@ -168,7 +168,7 @@ class DataUtils:
 
     @staticmethod
     def group_by(items: List, key_fn: Callable) -> Dict:
-        """تجميع العناصر حسب مفتاح"""
+        """Group items by key"""
         groups = {}
         for item in items:
             key = key_fn(item)
@@ -179,7 +179,7 @@ class DataUtils:
 
     @staticmethod
     def flatten(nested: List) -> List:
-        """تسوية قائمة متداخلة"""
+        """Flatten nested list"""
         result = []
         for item in nested:
             if isinstance(item, list):
@@ -190,7 +190,7 @@ class DataUtils:
 
     @staticmethod
     def deep_merge(base: Dict, overlay: Dict, overwrite: bool = True) -> Dict:
-        """دمج عميق بين قاموسين"""
+        """Deep merge two dicts"""
         result = base.copy()
         for key, value in overlay.items():
             if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -201,28 +201,28 @@ class DataUtils:
 
     @staticmethod
     def filter_dict(d: Dict, keys: List[str]) -> Dict:
-        """تصفية القاموس بمفاتيح محددة"""
+        """Filter dict by keys"""
         return {k: d[k] for k in keys if k in d}
 
     @staticmethod
     def rename_keys(d: Dict, mapping: Dict[str, str]) -> Dict:
-        """إعادة تسمية المفاتيح"""
+        """Rename keys"""
         return {mapping.get(k, k): v for k, v in d.items()}
 
     @staticmethod
     def to_json(obj: Any, pretty: bool = True) -> str:
-        """تحويل إلى JSON"""
+        """Convert to JSON"""
         indent = 2 if pretty else None
         return json.dumps(obj, indent=indent, ensure_ascii=False, default=str)
 
     @staticmethod
     def from_json(text: str) -> Any:
-        """تحليل JSON"""
+        """Parse JSON"""
         return json.loads(text)
 
     @staticmethod
     def to_table(data: List[Dict], headers: Optional[List[str]] = None) -> str:
-        """تحويل قائمة إلى جدول نصي"""
+        """Convert list to text table"""
         if not data:
             return ""
         if not headers:
@@ -258,7 +258,7 @@ class DataUtils:
 # =========================
 
 class TimeUtils:
-    """أدوات الوقت والتاريخ"""
+    """Time and date tools"""
 
     @staticmethod
     def now() -> float:
@@ -274,7 +274,7 @@ class TimeUtils:
 
     @staticmethod
     def format_duration(seconds: float) -> str:
-        """تنسيق المدة بطريقة مقروءة"""
+        """Format duration in readable way"""
         if seconds < 1:
             return f"{seconds*1000:.0f}ms"
         if seconds < 60:
@@ -290,7 +290,7 @@ class TimeUtils:
 
     @staticmethod
     def time_ago(ts: float) -> str:
-        """منذ متى"""
+        """Time ago"""
         diff = time.time() - ts
         if diff < 60:
             return f"منذ {int(diff)} ثانية"
@@ -302,7 +302,7 @@ class TimeUtils:
 
     @staticmethod
     def human_readable_size(bytes_count: int) -> str:
-        """حجم مقروء"""
+        """Human readable size"""
         for unit in ['B', 'KB', 'MB', 'GB']:
             if bytes_count < 1024:
                 return f"{bytes_count:.1f} {unit}"
@@ -315,7 +315,7 @@ class TimeUtils:
 # =========================
 
 class StatsUtils:
-    """أدوات إحصائية"""
+    """Statistical tools"""
 
     @staticmethod
     def mean(values: List[float]) -> float:
@@ -384,12 +384,12 @@ class StatsUtils:
 # =========================
 
 class FileUtils:
-    """أدوات الملفات"""
+    """File tools"""
 
     @staticmethod
     def safe_read(path: str, encoding: str = "utf-8",
                   max_size: int = 10 * 1024 * 1024) -> Optional[str]:
-        """قراءة آمنة للملفات"""
+        """Safe file reading"""
         try:
             path_obj = Path(path)
             if not path_obj.exists():
@@ -402,7 +402,7 @@ class FileUtils:
 
     @staticmethod
     def safe_write(path: str, content: str, encoding: str = "utf-8") -> bool:
-        """كتابة آمنة للملفات"""
+        """Safe file writing"""
         try:
             path_obj = Path(path)
             path_obj.parent.mkdir(parents=True, exist_ok=True)
@@ -413,7 +413,7 @@ class FileUtils:
 
     @staticmethod
     def get_size(path: str) -> int:
-        """حجم الملف أو المجلد"""
+        """File or directory size"""
         path_obj = Path(path)
         if not path_obj.exists():
             return 0
@@ -428,7 +428,7 @@ class FileUtils:
     @staticmethod
     def find_files(directory: str, pattern: str = "*.py",
                    recursive: bool = True) -> List[str]:
-        """البحث عن ملفات"""
+        """Find files"""
         path = Path(directory)
         if not path.exists():
             return []
@@ -449,7 +449,7 @@ class FileUtils:
 # =========================
 
 class SecurityUtils:
-    """أدوات أمنية"""
+    """Security tools"""
 
     @staticmethod
     def hash_string(text: str, algorithm: str = "sha256") -> str:
@@ -475,7 +475,7 @@ class SecurityUtils:
 
     @staticmethod
     def is_safe_path(path: str, allowed_dirs: Optional[List[str]] = None) -> bool:
-        """التحقق من أمان المسار"""
+        """Safe path check"""
         resolved = os.path.realpath(path)
         if allowed_dirs:
             for ad in allowed_dirs:

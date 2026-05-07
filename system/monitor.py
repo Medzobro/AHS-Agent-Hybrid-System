@@ -4,12 +4,12 @@ AHS - Monitoring System
 ========================
 نظام المراقبة — يراقب أداء وصحة النظام.
 
-المميزات:
-  - مراقبة الوقت الحقيقي
-  - إحصائيات الأداء
-  - تنبيهات عند المشاكل
-  - تقارير دورية
-  - تخزين المقاييس
+Features:
+  - Real-time monitoring
+  - Performance statistics
+  - Alertات عند المشاكل
+  - Periodic reports
+  - Metrics storage
 """
 
 import json, os, sys, time, threading
@@ -22,7 +22,7 @@ from collections import deque
 
 @dataclass
 class Metric:
-    """متري واحد"""
+    """Single metric"""
     name: str
     value: float
     timestamp: float = field(default_factory=time.time)
@@ -41,7 +41,7 @@ class Metric:
 
 @dataclass
 class Alert:
-    """تنبيه"""
+    """Alert"""
     metric: str
     value: float
     threshold: float
@@ -63,14 +63,14 @@ class Alert:
 
 
 class MetricsCollector:
-    """جامع المقاييس"""
+    """Metrics collector"""
 
     def __init__(self, max_entries: int = 1000):
         self._metrics: Dict[str, deque] = {}
         self._max_entries = max_entries
 
     def record(self, name: str, value: float, **tags):
-        """تسجيل متري"""
+        """Record metric"""
         if name not in self._metrics:
             self._metrics[name] = deque(maxlen=self._max_entries)
         self._metrics[name].append(Metric(name=name, value=value, tags=tags))
@@ -131,7 +131,7 @@ class MetricsCollector:
 
 class Monitor:
     """
-    نظام المراقبة الرئيسي.
+    Main monitoring system.
     """
 
     def __init__(self):
@@ -200,16 +200,16 @@ class Monitor:
                 pass
 
     def on_alert(self, handler: Callable):
-        """تسجيل معالج التنبيهات"""
+        """تسجيل معالج الAlertات"""
         self._alert_handlers.append(handler)
 
     def record(self, name: str, value: float, **tags):
-        """تسجيل متري مع التحقق من الحدود"""
+        """Record metric مع التحقق من الحدود"""
         self.metrics.record(name, value, **tags)
         self.check_threshold(name, value)
 
     def record_execution(self, name: str, duration: float, success: bool):
-        """تسجيل تنفيذ (مفيد للمهام)"""
+        """Record execution (useful for tasks)"""
         self.record(f"{name}.duration", duration)
         self.record(f"{name}.success", 1.0 if success else 0.0)
         self.metrics.record(f"{name}.total", 1.0, success=str(success))
@@ -279,7 +279,7 @@ class Monitor:
 # ====== Thresholds Predefined ======
 
 class DefaultThresholds:
-    """الحدود الافتراضية"""
+    """Default thresholds"""
     @staticmethod
     def apply(monitor: Monitor):
         monitor.set_threshold("hermes.duration", 30, 60, "above")
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     DefaultThresholds.apply(monitor)
 
-    # محاكاة مقاييس
+    # Simulate metrics
     for i in range(10):
         monitor.record("test.metric", i * 10, test="simulation")
         monitor.record("hermes.duration", 5 + i * 3)
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     print("📊 Monitor Report:")
     monitor.print_report()
 
-    # محاكاة تنبيه
+    # محاكاة Alert
     monitor.record("hermes.duration", 65)  # → critical alert
     print("\n🚨 After alert:")
     monitor.print_report()

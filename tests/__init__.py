@@ -3,10 +3,10 @@ from ..__init__ import __version__
 """
 AHS - Test Package
 ===================
-اختبارات شاملة لجميع مكونات AHS.
+Comprehensive tests for all AHS components.
 
-الملفات:
-  - test_suite.py: 18 اختباراً في 6 مجموعات:
+Files:
+  - test_suite.py: 18 tests in 6 groups:
     * Core (Orchestrator, Planning, AgentLoop, Errors)
     * System (Tools, Config, Doctor, MultiAgent, Skills)
     * Skills (Hybrid, CodeAssistant, Synthesizer)
@@ -14,10 +14,10 @@ AHS - Test Package
     * Performance (JSON, Memory)
     * Utility (JSON tools, UUID)
 
-التشغيل:
+Run:
   python3 tests/test_suite.py
 
-النتيجة المتوقعة:
+Expected result:
   ✅ Passed: 18/18
   ❌ Failed: 0
 """

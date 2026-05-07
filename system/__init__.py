@@ -1,32 +1,32 @@
 """
 AHS - System Package
 =====================
-الأنظمة الداعمة — تدير وتنظم كل شيء.
+Supporting systems — manage and organize everything.
 
-المكونات (17):
-  - config_manager: إدارة الإعدادات (JSON, env, profiles)
-  - doctor: فحوصات صحية (Hermes, API, ملفات, شبكة)
-  - event_system: ناقل الأحداث غير المتزامن
-  - integration: طبقة التكامل — تربط كل المكونات
-  - logger: نظام تسجيل متكامل
-  - monitor: مراقبة الأداء والصحة
-  - multi_agent: 5 وكلاء بأدوار مختلفة بالتوازي
-  - pipeline: خطوط أنابيب البيانات
-  - plugin_system: نظام الإضافات
-  - scheduler: جدولة المهام التلقائية
-  - skill_manager: إدارة المهارات واكتشافها
-  - tool_registry: سجل الأدوات (10 أدوات مدمجة)
-  - cache: تخزين مؤقت ذكي
-  - exporter: تصدير البيانات (JSON, CSV, MD, HTML)
-  - repl: واجهة تفاعلية سطرية
-  - utils: أدوات مساعدة (نصوص، بيانات، وقت)
-  - AHSIntegration: نقطة الدخول الموحدة للنظام
+Components (17):
+  - config_manager: Configuration management (JSON, env, profiles)
+  - doctor: Health checks (Hermes, API, filesystem, network)
+  - event_system: Async event bus
+  - integration: Integration layer — connects all components
+  - logger: Full logging system
+  - monitor: Performance and health monitoring
+  - multi_agent: 5 agents with different roles in parallel
+  - pipeline: Data processing pipelines
+  - plugin_system: Plugin system
+  - scheduler: Background task scheduling
+  - skill_manager: Skill management and discovery
+  - tool_registry: Tool registry (10 built-in tools)
+  - cache: Smart caching
+  - exporter: Data export (JSON, CSV, MD, HTML)
+  - repl: Interactive command-line REPL
+  - utils: Utilities (text, data, time)
+  - AHSIntegration: Unified system entry point
 
-الاستخدام:
+Usage:
   from system.integration import AHSIntegration
   ahs = AHSIntegration()
   ahs.initialize()
-  ahs.process("مهمتي")
+  ahs.process("My task")
 """
 
 from .config_manager import ConfigManager

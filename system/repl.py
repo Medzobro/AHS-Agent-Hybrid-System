@@ -2,14 +2,14 @@
 """
 AHS - REPL (Read-Eval-Print Loop)
 ===================================
-واجهة تفاعلية سطرية للتفاعل مع AHS.
+Interactive command-line interface for AHS.
 
 المميزات:
-  - جلسة تفاعلية كاملة
-  - أوامر مدمجة (/help, /status, /health, /tools...)
-  - تصدير الجلسة
-  - سجل الأوامر
-  - إكمال تلقائي للأوامر
+  - Full interactive session
+  - Built-in commands (/help, /status, /health, /tools...)
+  - Session export
+  - Command history
+  - Auto-completion for commands
 """
 
 import json, os, sys, time, cmd, readline, shlex
@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 class AHSREPL(cmd.Cmd):
     """
-    واجهة تفاعلية سطرية للنظام.
+    Interactive command-line interface for the system.
     """
 
     intro = """
@@ -43,7 +43,7 @@ class AHSREPL(cmd.Cmd):
         self.start_time = time.time()
 
     def default(self, line: str):
-        """معالجة أي إدخال غير معروف"""
+        """Handle unknown input"""
         if not line.strip():
             return
 
@@ -89,41 +89,41 @@ class AHSREPL(cmd.Cmd):
         if handler:
             handler(*args)
         else:
-            print(f"❌ أمر غير معروف: /{cmd}")
-            print("   اكتب /help لعرض الأوامر المتاحة")
+            print(f"❌ Unknown command: /{cmd}")
+            print("   Type /help for available commands")
 
     def _cmd_help(self, *args):
-        """عرض المساعدة"""
+        """Display help"""
         help_text = """
-📋 أوامر AHS:
+📋 AHS Commands:
 
   /help              ← عرض هذه المساعدة
-  /quit, /exit       ← الخروج
+  /quit, /exit       ← Exit
 
-  /status            ← حالة النظام
-  /health            ← فحص صحي كامل
-  /doctor            ← تشخيص مفصل
-  /stats             ← إحصائيات
-  /version           ← الإصدار
+  /status            ← System status
+  /health            ← Full health check
+  /doctor            ← Detailed diagnosis
+  /stats             ← Statistics
+  /version           ← Version
 
-  /mode [auto|hybrid|quick|deep|code|flow]  ← تغيير الوضع
-  /verbose           ← تفعيل/تعطيل العرض المفصل
+  /mode [auto|hybrid|quick|deep|code|flow]  ← Change mode
+  /verbose           ← Toggle verbose mode
 
-  /tools             ← عرض الأدوات المتاحة
-  /skills            ← عرض المهارات
-  /config            ← عرض الإعدادات
-  /plugins           ← عرض الإضافات
-  /pipeline          ← عرض خطوط البيانات
-  /events            ← عرض الأحداث
-  /scheduler         ← عرض المهام المجدولة
+  /tools             ← Show available tools
+  /skills            ← Show skills
+  /config            ← Show config
+  /plugins           ← Show plugins
+  /pipeline          ← Show pipelines
+  /events            ← Show events
+  /scheduler         ← Show scheduled tasks
 
-  /history           ← سجل الأوامر
-  /clear             ← مسح الشاشة
-  /save [filename]   ← حفظ الجلسة
-  /load [filename]   ← تحميل جلسة
-  /export [filename] ← تصدير السجل
+  /history           ← Command history
+  /clear             ← Clear screen
+  /save [filename]   ← Save session
+  /load [filename]   ← Load session
+  /export [filename] ← Export history
 
-الوضع الحالي: {mode}
+Current mode: {mode}
 
 أمثلة:
   🤝 AHS> ما هو AHS؟
@@ -134,14 +134,14 @@ class AHSREPL(cmd.Cmd):
         print(help_text)
 
     def _cmd_quit(self, *args):
-        """الخروج من النظام"""
+        """Exit system"""
         print("👋 مع السلامة!")
         return True
 
     def _cmd_status(self, *args):
-        """عرض حالة النظام"""
+        """عرض System status"""
         if not self.ahs:
-            print("⚠️ النظام غير مهيأ")
+            print("⚠️ System not initialized")
             return
 
         s = self.ahs.get_status()
@@ -157,7 +157,7 @@ class AHSREPL(cmd.Cmd):
     def _cmd_health(self, *args):
         """فحص صحي"""
         if not self.ahs:
-            print("⚠️ النظام غير مهيأ")
+            print("⚠️ System not initialized")
             return
         h = self.ahs.health_check()
         summary = h.get("summary", {})
@@ -168,7 +168,7 @@ class AHSREPL(cmd.Cmd):
             print(f"  {icon} {check.get('name', '?')}: {check.get('message', '?')}")
 
     def _cmd_doctor(self, *args):
-        """تشخيص مفصل"""
+        """Detailed diagnosis"""
         if not self.ahs or not self.ahs.doctor:
             print("⚠️ Doctor غير متاح")
             return
@@ -181,59 +181,59 @@ class AHSREPL(cmd.Cmd):
                 print(f"     {check['message']}")
 
     def _cmd_tools(self, *args):
-        """عرض الأدوات"""
+        """عرض الTools"""
         if not self.ahs or not self.ahs.tools:
-            print("⚠️ الأدوات غير متاحة")
+            print("⚠️ Tools unavailable")
             return
         tools = self.ahs.tools.list()
-        print(f"\n🔧 **الأدوات ({len(tools)})**")
+        print(f"\n🔧 **الTools ({len(tools)})**")
         for t in tools:
             print(f"  • {t['name']}: {t.get('description', '')[:60]}")
 
     def _cmd_skills(self, *args):
-        """عرض المهارات"""
+        """Show skills"""
         if not self.ahs or not self.ahs.skills:
-            print("⚠️ المهارات غير متاحة")
+            print("⚠️ Skills unavailable")
             return
         skills = self.ahs.skills.list()
-        print(f"\n🧠 **المهارات ({len(skills)})**")
+        print(f"\n🧠 **الSkills ({len(skills)})**")
         for s in skills:
             print(f"  • {s.get('name', '?')}: {s.get('description', '')[:60]}")
 
     def _cmd_mode(self, *args):
-        """تغيير الوضع"""
+        """Change mode"""
         if args:
             self.mode = args[0]
-            print(f"✅ تم تغيير الوضع إلى: {self.mode}")
+            print(f"✅ تم Change mode إلى: {self.mode}")
         else:
-            print(f"📌 الوضع الحالي: {self.mode}")
-            print("   الأوضاع: auto, hybrid, quick, deep, code, flow")
+            print(f"📌 Current mode: {self.mode}")
+            print("   Modes: auto, hybrid, quick, deep, code, flow")
 
     def _cmd_history(self, *args):
-        """سجل الأوامر"""
+        """Command history"""
         print(f"\n📜 **السجل ({len(self.session_log)} أمر)**")
         for i, entry in enumerate(self.session_log[-20:], 1):
             print(f"  {i}. [{entry['mode']}] {entry['task'][:60]}")
 
     def _cmd_stats(self, *args):
-        """إحصائيات"""
-        print(f"\n📊 **الإحصائيات**")
+        """Statistics"""
+        print(f"\n📊 **الStatistics**")
         print(f"  الأوامر: {len(self.session_log)}")
-        print(f"  وقت التشغيل: {time.time() - self.start_time:.0f}s")
+        print(f"  Uptime: {time.time() - self.start_time:.0f}s")
         if self.ahs:
             s = self.ahs.stats
-            print(f"  مكالمات Hermes: {s.hermes_calls}")
-            print(f"  أدوات: {s.tools_called}")
-            print(f"  مهارات: {s.skills_executed}")
-            print(f"  أخطاء: {s.errors}")
+            print(f"  Hermes calls: {s.hermes_calls}")
+            print(f"  Tools: {s.tools_called}")
+            print(f"  Skills: {s.skills_executed}")
+            print(f"  Errors: {s.errors}")
 
     def _cmd_clear(self, *args):
-        """مسح الشاشة"""
+        """Clear screen"""
         os.system('clear' if os.name == 'posix' else 'cls')
         print(self.intro)
 
     def _cmd_save(self, *args):
-        """حفظ الجلسة"""
+        """Save session"""
         filename = args[0] if args else f"session_{int(time.time())}.json"
         path = Path("sessions")
         path.mkdir(exist_ok=True)
@@ -244,12 +244,12 @@ class AHSREPL(cmd.Cmd):
             "saved_at": datetime.now().isoformat(),
         }
         filepath.write_text(json.dumps(data, indent=2, ensure_ascii=False))
-        print(f"✅ حفظت الجلسة في {filepath}")
+        print(f"✅ Session saved to {filepath}")
 
     def _cmd_load(self, *args):
-        """تحميل جلسة"""
+        """Load session"""
         if not args:
-            print("⚠️ اكتب /load <filename>")
+            print("⚠️ Type /load <filename>")
             return
         filepath = Path("sessions") / args[0]
         if not filepath.exists():
@@ -258,7 +258,7 @@ class AHSREPL(cmd.Cmd):
         data = json.loads(filepath.read_text())
         self.mode = data.get("mode", "auto")
         self.session_log = data.get("commands", [])
-        print(f"✅ تم تحميل {len(self.session_log)} أمر")
+        print(f"✅ Loaded {len(self.session_log)} أمر")
 
     def _cmd_export(self, *args):
         filename = args[0] if args else f"log_{int(time.time())}.md"
@@ -267,7 +267,7 @@ class AHSREPL(cmd.Cmd):
             lines.append(f"- **[{entry['mode']}]** {entry['task']}")
             lines.append(f"  → {entry.get('response', '')[:100]}...")
         Path(filename).write_text("\n".join(lines))
-        print(f"✅ ملف التصدير: {filename}")
+        print(f"✅ Export file: {filename}")
 
     def _cmd_verbose(self, *args):
         self.verbose = not self.verbose
@@ -288,26 +288,26 @@ class AHSREPL(cmd.Cmd):
 
     def _cmd_pipeline(self, *args):
         print(f"\n🔗 **خطوط البيانات**")
-        print("  قيد التطوير...")
+        print("  Under development...")
 
     def _cmd_events(self, *args):
         print(f"\n📡 **الأحداث**")
-        print("  قيد التطوير...")
+        print("  Under development...")
 
     def _cmd_plugins(self, *args):
         print(f"\n🧩 **الإضافات**")
-        print("  قيد التطوير...")
+        print("  Under development...")
 
     def _cmd_scheduler(self, *args):
         print(f"\n⏰ **المهام المجدولة**")
-        print("  قيد التطوير...")
+        print("  Under development...")
 
     def _process_task(self, task: str):
         """معالجة مهمة"""
         if not self.ahs:
-            print("⚠️ النظام غير مهيأ، جاري التهيئة...")
+            print("⚠️ System not initialized، جاري التهيئة...")
             self.ahs.__class__ = type(self.ahs) if self.ahs else None
-            print("❌ لا يمكن معالجة المهمة")
+            print("❌ Cannot process task")
             return
 
         start = time.time()
@@ -325,7 +325,7 @@ class AHSREPL(cmd.Cmd):
         self.session_log.append(entry)
 
         # عرض
-        response = result.get("response", "⚠️ لا رد")
+        response = result.get("response", "⚠️ No reply")
         mode = result.get("mode", self.mode)
         print(f"\n[{mode.upper()}] {response}")
         if self.verbose:
@@ -354,7 +354,7 @@ def start_repl(ahs=None):
 
 if __name__ == "__main__":
     print("🤝 AHS REPL — واجهة تفاعلية")
-    print("⚠️  هذا الإصدار يعمل بدون اتصال Hermes")
+    print("⚠️  هذا Version يعمل بدون اتصال Hermes")
     print("   اكتب help للبدء\n")
 
     from system.integration import AHSIntegration

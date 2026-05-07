@@ -1,23 +1,23 @@
 """
 AHS - Core Package
 ==================
-النواة الأساسية للنظام — التصنيف، التخطيط، وحلقات الوكيل.
+The core engine — classification, planning, and agent loops.
 
-المكونات:
-  - orchestrator: تصنيف المهام وتخطيط التنفيذ
-  - orchestrator_v2: تدفق متعدد الخطوات للتخطيط العميق
-  - agent_loop: حلقة الوكيل الكاملة (استقبال ← تنفيذ ← رد)
+Components:
+  - orchestrator: Task classification and execution planning
+  - orchestrator_v2: Multi-step flow orchestration
+  - agent_loop: Complete agent loop (receive → execute → respond)
 
-يدعم:
-  - 4 أنواع مهام: QUICK, DEEP, CODE, COMMAND
-  - تخطيط تنفيذ لكل نوع
-  - ذاكرة تعلم قصيرة المدى
-  - Hybrid Mode: OpenClaw + Hermes معاً
+Supports:
+  - 4 task types: QUICK, DEEP, CODE, COMMAND
+  - Execution planning per type
+  - Short-term learning memory
+  - Hybrid Mode: OpenClaw + Hermes together
 
-الاستخدام:
+Usage:
   from core.orchestrator import HybridOrchestrator
   o = HybridOrchestrator()
-  task_type, plan = o.classify_task("اكتب كود Python")
+  task_type, plan = o.classify_task("Write Python code")
 """
 
 from .orchestrator import HybridOrchestrator, TaskType

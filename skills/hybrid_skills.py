@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-AHS - مهارات هجينة
+AHS - Hybrid Skills
 ==================
-مهارات تستخدم OpenClaw + Hermes معاً لتنفيذ مهمة واحدة.
+Skills that use OpenClaw + Hermes together to execute a single task.
 """
 
 import json
@@ -16,7 +16,7 @@ from bridge.hermes_bridge import HermesBridge
 
 class HybridSkills:
     """
-    مهارات هجينة — كل مهارة تستخدم OpenClaw و Hermes معاً.
+    Hybrid Skills — كل مهارة تستخدم OpenClaw و Hermes معاً.
     """
 
     def __init__(self):

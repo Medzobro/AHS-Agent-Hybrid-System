@@ -3,7 +3,7 @@
 """
 AHS: Agent Hybrid System
 =========================
-نظام هجين يجمع OpenClaw (تحكم سريع) و Hermes (تفكير عميق).
+Hybrid system combining OpenClaw (fast control) + Hermes (deep thinking).
 """
 
 __version__ = "0.2.0"
@@ -12,7 +12,7 @@ __license__ = "MIT"
 __description__ = "Hybrid AI Agent System combining OpenClaw + Hermes"
 __repo__ = "https://github.com/Medzobro/AHS-Agent-Hybrid-System"
 
-# الحقول المعبأة
+# Pre-filled fields
 __all__ = [
     "Orchestrator",
     "AgentLoop",

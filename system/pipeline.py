@@ -4,12 +4,12 @@ AHS - Data Pipeline
 ====================
 خط أنابيب البيانات — معالجة، تحويل، وتحميل.
 
-المميزات:
-  - خطوط أنابيب قابلة للتكوين
-  - معالجات وسيطة (middleware)
-  - تحويل البيانات
-  - التحقق من الصحة
-  - التخزين المؤقت
+Features:
+  - Configurable pipelines
+  - Middleware processors
+  - Data transformation
+  - Validation
+  - Caching
 """
 
 import json, os, sys, time, hashlib, threading
@@ -33,7 +33,7 @@ class PipelineStage(Enum):
 
 @dataclass
 class DataPacket:
-    """حزمة بيانات تتدفق عبر الخط"""
+    """Data packet flowing through the pipeline"""
     id: str = field(default_factory=lambda: __import__("uuid").uuid4().hex[:12])
     data: Any = None
     metadata: Dict = field(default_factory=dict)
@@ -60,7 +60,7 @@ class DataPacket:
 
 
 class Processor:
-    """معالج بيانات واحد"""
+    """Single data processor"""
     def __init__(self, name: str, handler: Callable,
                  stage: PipelineStage = PipelineStage.CUSTOM,
                  description: str = ""):
@@ -86,7 +86,7 @@ class Processor:
 
 
 class Pipeline:
-    """خط أنابيب بيانات كامل"""
+    """Complete data pipeline"""
     def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
@@ -148,7 +148,7 @@ class Pipeline:
 
 
 class PipelineRegistry:
-    """سجل خطوط الأنابيب"""
+    """Pipeline registry"""
     def __init__(self):
         self.pipelines: Dict[str, Pipeline] = {}
 
@@ -177,7 +177,7 @@ class PipelineRegistry:
 # ====== أمثلة: معالجات جاهزة ======
 
 class TextProcessors:
-    """معالجات نصوص جاهزة"""
+    """Ready-made text processors"""
 
     @staticmethod
     def lowercase(packet: DataPacket) -> DataPacket:
@@ -215,7 +215,7 @@ class TextProcessors:
 
 
 class JSONProcessors:
-    """معالجات JSON جاهزة"""
+    """Ready-made JSON processors"""
 
     @staticmethod
     def parse(packet: DataPacket) -> DataPacket:
@@ -246,7 +246,7 @@ class JSONProcessors:
 
 
 class ValidationProcessors:
-    """معالجات تحقق جاهزة"""
+    """Ready-made validation processors"""
 
     @staticmethod
     def not_empty(packet: DataPacket) -> DataPacket:
@@ -275,7 +275,7 @@ class ValidationProcessors:
 # ====== بنائين ======
 
 def build_text_pipeline(name: str = "text_pipeline") -> Pipeline:
-    """بناء خط أنابيب نصوص أساسي"""
+    """Build basic text pipeline"""
     pipeline = Pipeline(name, "Basic text processing pipeline")
     pipeline.add(TextProcessors.strip, "strip", PipelineStage.INPUT)
     pipeline.add(TextProcessors.remove_html, "remove_html", PipelineStage.TRANSFORM)
@@ -285,7 +285,7 @@ def build_text_pipeline(name: str = "text_pipeline") -> Pipeline:
 
 
 def build_json_pipeline(name: str = "json_pipeline") -> Pipeline:
-    """بناء خط أنابيب JSON أساسي"""
+    """Build basic JSON pipeline"""
     pipeline = Pipeline(name, "Basic JSON processing pipeline")
     pipeline.add(JSONProcessors.parse, "parse", PipelineStage.INPUT)
     pipeline.add(ValidationProcessors.not_empty, "validate", PipelineStage.VALIDATE)
@@ -293,7 +293,7 @@ def build_json_pipeline(name: str = "json_pipeline") -> Pipeline:
 
 
 if __name__ == "__main__":
-    # مثال
+    # Example
     pipeline = build_text_pipeline()
     result = pipeline.run("  <b>Hello</b> AHS World!  " * 100)
     print(f"✅ Success: {result.success}")

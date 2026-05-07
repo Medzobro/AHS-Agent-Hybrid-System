@@ -2,14 +2,14 @@
 """
 AHS - Cache System
 ===================
-نظام التخزين المؤقت — للنتائج المتكررة.
+نظام الStore المؤقت — للنتائج المتكررة.
 
-المميزات:
-  - تخزين في الذاكرة
-  - انتهاء صلاحية (TTL)
+Features:
+  - In-memory storage
+  - Expiration (TTL)
   - LRU Eviction
-  - إحصائيات
-  - تسلسل (serialization)
+  - Statistics
+  - Serialization
 """
 
 import json, os, sys, time, threading
@@ -21,10 +21,10 @@ from datetime import datetime
 
 @dataclass
 class CacheEntry:
-    """مدخل في الكاش"""
+    """Cache entry"""
     key: str
     value: Any
-    ttl: float = 300.0  # 5 دقائق افتراضياً
+    ttl: float = 300.0  # 5 minutes by default
     created_at: float = field(default_factory=time.time)
     access_count: int = 0
     size_bytes: int = 0
@@ -52,7 +52,7 @@ class CacheEntry:
 
 class Cache:
     """
-    Cache بذاكرة مع LRU eviction.
+    In-memory cache with LRU eviction.
     """
 
     def __init__(self, max_size: int = 200, default_ttl: float = 300.0,
@@ -68,7 +68,7 @@ class Cache:
         }
 
     def get(self, key: str, default: Any = None) -> Any:
-        """الحصول على قيمة"""
+        """Get value"""
         with self._lock:
             entry = self._data.get(key)
             if not entry:
@@ -87,7 +87,7 @@ class Cache:
             return entry.value
 
     def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
-        """تخزين قيمة"""
+        """Store value"""
         with self._lock:
             # حساب الحجم
             try:
@@ -117,7 +117,7 @@ class Cache:
             return True
 
     def delete(self, key: str) -> bool:
-        """حذف مفتاح"""
+        """Delete key"""
         with self._lock:
             if key in self._data:
                 del self._data[key]
@@ -125,13 +125,13 @@ class Cache:
         return False
 
     def clear(self):
-        """مسح الكاش"""
+        """Clear cache"""
         with self._lock:
             self._data.clear()
             self._stats = {k: 0 for k in self._stats}
 
     def exists(self, key: str) -> bool:
-        """هل المفتاح موجود؟"""
+        """Does key exist?"""
         with self._lock:
             entry = self._data.get(key)
             if entry and not entry.expired:
@@ -140,7 +140,7 @@ class Cache:
 
     def get_or_set(self, key: str, factory: Callable,
                    ttl: Optional[float] = None) -> Any:
-        """الحصول على القيمة أو إنشائها"""
+        """Get or create value"""
         value = self.get(key)
         if value is not None:
             return value
@@ -149,7 +149,7 @@ class Cache:
         return value
 
     def _evict_one(self):
-        """إخلاء مدخل واحد (LRU)"""
+        """Evict one entry (LRU)"""
         if not self._data:
             return
         # أقدم مدخل
@@ -157,7 +157,7 @@ class Cache:
         self._stats["evictions"] += 1
 
     def cleanup(self):
-        """تنظيف المدخلات المنتهية"""
+        """Cleanup expired entries"""
         with self._lock:
             expired = [k for k, v in self._data.items() if v.expired]
             for k in expired:
@@ -197,12 +197,12 @@ class Cache:
 # ====== كاش مخصص ======
 
 class HermesCache(Cache):
-    """كاش خاص باستجابات Hermes"""
+    """Cache specific to Hermes responses"""
     def __init__(self):
         super().__init__(max_size=100, default_ttl=600)
 
     def get_or_query(self, task: str, hermes_bridge) -> str:
-        """الحصول من الكاش أو استعلام Hermes"""
+        """Get from cache or query Hermes"""
         cache_key = f"hermes:{hash(task)}"
         cached = self.get(cache_key)
         if cached:
@@ -216,7 +216,7 @@ class HermesCache(Cache):
 
 
 class ToolResultCache(Cache):
-    """كاش نتائج الأدوات"""
+    """Tool result cache"""
     def __init__(self):
         super().__init__(max_size=500, default_ttl=60)
 
@@ -235,7 +235,7 @@ class ToolResultCache(Cache):
 # ====== الـ Cache Manager الشامل ======
 
 class CacheManager:
-    """مدير الكاش المركزي"""
+    """Central cache manager"""
     def __init__(self):
         self.caches: Dict[str, Cache] = {}
         self.default = Cache()
@@ -263,11 +263,11 @@ class CacheManager:
 if __name__ == "__main__":
     cache = Cache(max_size=10, default_ttl=60)
 
-    # تخزين
+    # Store
     cache.set("test1", {"value": 42})
     cache.set("test2", "hello AHS")
 
-    # استرجاع
+    # Retrieve
     print(f"test1: {cache.get('test1')}")
     print(f"test2: {cache.get('test2')}")
     print(f"missing: {cache.get('missing', 'NOT_FOUND')}")

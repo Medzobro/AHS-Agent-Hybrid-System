@@ -1,18 +1,18 @@
 """
 AHS - Skills Package
 =====================
-مجموعة المهارات الهجينة — تجمع بين OpenClaw (سريع) و Hermes (عميق).
+Hybrid skills collection — combining OpenClaw (fast) + Hermes (deep).
 
-المهارات:
-  - code_assistant: مساعد برمجة — يكتب كوداً من الوصف بالعربية
-  - hybrid_skills: 4 مهارات هجينة (بحث، مراجعة كود، تخطيط، تعلم)
-  - synthesizer: دمج ردود OpenClaw + Hermes في رد واحد
-  - extended_skills: مهارات إضافية (توليد كود، تحليل نصوص، تخطيط مهام)
+Skills:
+  - code_assistant: Programming assistant — generates code from natural language
+  - hybrid_skills: 4 hybrid skills (research, code review, planning, learning)
+  - synthesizer: Merges OpenClaw + Hermes responses into one
+  - extended_skills: Additional skills (code gen, text analysis, task planning)
 
-مثال:
+Example:
   from skills.hybrid_skills import HybridSkills
   skills = HybridSkills()
-  result = skills.research_and_summarize("موضوع البحث")
+  result = skills.research_and_summarize("Research topic")
 """
 
 from .code_assistant import CodeAssistant
