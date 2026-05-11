@@ -21,7 +21,6 @@ Usage:
 """
 
 from .orchestrator import HybridOrchestrator, TaskType
-from .orchestrator_v2 import HybridOrchestratorV2
 from .agent_loop import HybridAgent
 
 __all__ = [

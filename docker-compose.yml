@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  mcp-http:
+    build: .
+    ports:
+      - "18900:18900"
+    environment:
+      - AHS_MCP_PORT=18900
+      - AHS_MCP_HOST=0.0.0.0
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    command: python3 bridge/mcp_http_server.py
+
+  ts-gateway:
+    build: .
+    ports:
+      - "18805:18805"
+    environment:
+      - AHS_GATEWAY_PORT=18805
+      - AHS_MCP_PORT=18900
+      - AHS_MCP_HOST=mcp-http
+    depends_on:
+      - mcp-http
+    command: node ts-core/dist/index.js

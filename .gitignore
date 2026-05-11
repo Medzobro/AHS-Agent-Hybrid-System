@@ -1,12 +1,47 @@
+# Node
+node_modules/
+ts-core/node_modules/
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
-.env
-*.log
-.git-credentials
-.DS_Store
-.venv/
-venv/
 *.egg-info/
+venv/
+.venv/
+
+# DB (dev data)
+*.db
+
+# Env
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swo
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+generated/
+
+# Archive (old, kept for reference)
+system_archive/
+
+# Dist
+ts-core/dist/
+
+# Data
+data/
+*.json
+
+# Logs
+*.log
+
+# Build
 dist/
-build/

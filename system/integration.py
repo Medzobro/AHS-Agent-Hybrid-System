@@ -14,7 +14,6 @@ Provides:
 import json, os, sys, time, uuid, threading, logging
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
-from pathlib import Path
 from enum import Enum
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -30,6 +29,7 @@ from system.tool_registry import ToolRegistry, create_default_tools, dump_tools_
 from system.skill_manager import SkillManager, SkillCategory
 from system.config_manager import ConfigManager
 from system.doctor import Doctor
+import system.self_learn as sl
 
 logger = logging.getLogger("ahs.integration")
 
@@ -162,6 +162,15 @@ class AHSIntegration:
             self._components_initialized.append("config")
         except Exception as e:
             results["config"] = f"❌ {e}"
+
+        # 9. Self-Learning
+        try:
+            self.learner = sl.SelfLearningSystem()
+            learn_result = self.learner.on_startup()
+            results["self_learning"] = f"✅ ({learn_result['stats']['fix_rate']}% fix rate)"
+            self._components_initialized.append("self_learning")
+        except Exception as e:
+            results["self_learning"] = f"❌ {e}"
 
         elapsed = time.time() - start
         all_ok = all("✅" in v for v in results.values())
@@ -317,6 +326,24 @@ class AHSIntegration:
         if event not in self._event_handlers:
             self._event_handlers[event] = []
         self._event_handlers[event].append(handler)
+
+    def learn_report(self) -> Dict:
+        """تقرير التعلم الذاتي"""
+        if not hasattr(self, 'learner'):
+            return {"status": "not_initialized"}
+        return self.learner.report()
+
+    def suggest_improvements(self) -> List:
+        """اقتراح تحسينات"""
+        if not hasattr(self, 'learner'):
+            return []
+        return self.learner.suggest_improvements()
+
+    def auto_fix(self) -> Dict[str, bool]:
+        """محاولة إصلاح كل الملفات تلقائياً"""
+        if not hasattr(self, 'learner'):
+            return {}
+        return self.learner.auto_fix_files()
 
     def _emit(self, event: str, data: Any):
         """Emit event"""

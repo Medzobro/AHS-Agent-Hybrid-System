@@ -1,5 +1,4 @@
 # AHS tests package
-from ..__init__ import __version__
 """
 AHS - Test Package
 ===================

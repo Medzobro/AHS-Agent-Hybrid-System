@@ -1,0 +1,27 @@
+# AHS — Agent Hybrid System Configuration
+# =========================================
+# Shared config between TypeScript Core (OpenClaw) and Python Service (Hermes)
+
+[AHS]
+version = 0.4.0
+codename = ترادف
+
+[gateway]
+port = 18791
+bind = 0.0.0.0
+
+[hermes_bridge]
+# MCP transport: http | websocket | stdio
+transport = http
+host = localhost
+port = 18789
+
+[orchestrator]
+# auto | hermes | openclaw | hybrid
+default_mode = auto
+max_steps = 10
+timeout_sec = 120
+
+[storage]
+shared_memory = bridge/shared_memory.json
+log_dir = logs

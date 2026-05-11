@@ -36,11 +36,9 @@ from .integration import AHSIntegration
 from .logger import AHSLogger, LogLevel
 from .monitor import Monitor, MetricsCollector
 from .multi_agent import MultiAgentOrchestrator, AgentRole, AgentWorker
-from .pipeline import Pipeline, PipelineRegistry
 from .plugin_system import Plugin, PluginManager, PluginStatus
-from .scheduler import Scheduler, ScheduledTask
 from .skill_manager import SkillManager
-from .tool_registry import ToolRegistry, Tool, ToolCategory
+from .tool_registry import ToolRegistry, ToolSpec, ToolCategory, ToolResult
 
 __all__ = [
     "ConfigManager", "Doctor",
@@ -49,9 +47,7 @@ __all__ = [
     "AHSLogger", "LogLevel",
     "Monitor", "MetricsCollector",
     "MultiAgentOrchestrator", "AgentRole", "AgentWorker",
-    "Pipeline", "PipelineRegistry",
     "Plugin", "PluginManager", "PluginStatus",
-    "Scheduler", "ScheduledTask",
     "SkillManager",
-    "ToolRegistry", "Tool", "ToolCategory",
+    "ToolRegistry", "ToolSpec", "ToolCategory", "ToolResult",
 ]
