@@ -325,7 +325,7 @@ export class HybridOrchestrator {
             "Content-Type": "application/json",
             "Content-Length": Buffer.byteLength(payload),
           },
-          timeout: 60000,
+          timeout: 3000,
         },
         (res: http.IncomingMessage) => {
           let body = "";

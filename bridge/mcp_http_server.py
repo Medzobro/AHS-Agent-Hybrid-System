@@ -10,7 +10,6 @@ import logging
 import os
 import sys
 import time
-from typing import Any
 
 import aiohttp
 from pathlib import Path

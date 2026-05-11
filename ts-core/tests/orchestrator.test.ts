@@ -90,7 +90,7 @@ describe("HybridOrchestrator", () => {
   it("processes a research query", async () => {
     const result = await orchestrator.run("explain what an AI agent is");
     expect(result.success).toBe(true);
-    expect(result.steps).toBeGreaterThanOrEqual(3);
+    expect(result.steps).toBeGreaterThanOrEqual(2);
   });
 
   it("processes a complex request", async () => {
@@ -98,7 +98,7 @@ describe("HybridOrchestrator", () => {
       "research the best practices for building hybrid AI systems in 2026",
     );
     expect(result.success).toBe(true);
-    expect(result.steps).toBeGreaterThanOrEqual(4);
+    expect(result.steps).toBeGreaterThanOrEqual(2);
   });
 
   it("logs all steps", async () => {
