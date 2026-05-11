@@ -17,9 +17,11 @@ Skills:
   - Knowledge Extractor: Extracts knowledge
 """
 
-import json, os, sys, time, re
-from typing import Dict, List, Optional, Any, Tuple
+import os
+import re
+import sys
 from datetime import datetime
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -32,10 +34,10 @@ class SkillBase:
         self.category = category
         self.call_count = 0
 
-    def execute(self, **kwargs) -> Dict:
+    def execute(self, **kwargs) -> dict:
         raise NotImplementedError
 
-    def info(self) -> Dict:
+    def info(self) -> dict:
         return {
             "name": self.name,
             "description": self.description,
@@ -106,7 +108,7 @@ if __name__ == "__main__":
         super().__init__("code_generator", "Generate code from description", "code")
 
     def execute(self, description: str = "", language: str = "python",
-                template: str = "script", **kwargs) -> Dict:
+                template: str = "script", **kwargs) -> dict:
         code_lines = self._generate_skeleton(description, language)
         code = "\n".join(code_lines)
 
@@ -131,7 +133,7 @@ if __name__ == "__main__":
             "template": template,
         }
 
-    def _generate_skeleton(self, description: str, language: str) -> List[str]:
+    def _generate_skeleton(self, description: str, language: str) -> list[str]:
         """Generate basic code skeleton from description"""
         desc_lower = description.lower()
         lines = ["    # TODO: Implement this function"]
@@ -142,7 +144,7 @@ if __name__ == "__main__":
                     "    a = float(input('Enter first number: '))",
                     "    b = float(input('Enter second number: '))",
                     "    result = a + b",
-                    f"    print(f'Sum: {{result}}')",
+                    "    print(f'Sum: {result}')",
                 ]
 
         elif "مصفوف" in desc_lower or "array" in desc_lower or "list" in desc_lower:
@@ -210,7 +212,7 @@ class TextAnalyzer(SkillBase):
     def __init__(self):
         super().__init__("text_analyzer", "Analyze texts and extract information", "text")
 
-    def execute(self, text: str = "", analysis_type: str = "basic", **kwargs) -> Dict:
+    def execute(self, text: str = "", analysis_type: str = "basic", **kwargs) -> dict:
         result = {"text": text[:100], "type": analysis_type}
 
         if analysis_type == "basic":
@@ -290,7 +292,7 @@ class TaskPlanner(SkillBase):
     def __init__(self):
         super().__init__("task_planner", "Task planning وتقسيمها", "planning")
 
-    def execute(self, task: str = "", complexity: str = "medium", **kwargs) -> Dict:
+    def execute(self, task: str = "", complexity: str = "medium", **kwargs) -> dict:
         steps = self._generate_plan(task, complexity)
 
         plan = {
@@ -304,7 +306,7 @@ class TaskPlanner(SkillBase):
         self.call_count += 1
         return plan
 
-    def _generate_plan(self, task: str, complexity: str) -> List[Dict]:
+    def _generate_plan(self, task: str, complexity: str) -> list[dict]:
         desc = task.lower()
         steps = []
 
@@ -351,7 +353,7 @@ class TaskPlanner(SkillBase):
 
         return steps
 
-    def _estimate_time(self, steps: List[Dict]) -> str:
+    def _estimate_time(self, steps: list[dict]) -> str:
         total = 0
         for s in steps:
             d = s.get("duration", "0m")
@@ -374,7 +376,7 @@ class DataReporter(SkillBase):
         super().__init__("data_reporter", "Report generation", "data")
 
     def execute(self, data: Any = None, title: str = "Report",
-                format: str = "text", **kwargs) -> Dict:
+                format: str = "text", **kwargs) -> dict:
         lines = []
         lines.append(f"# {title}")
         lines.append(f"Generated: {datetime.now().isoformat()}")
@@ -418,7 +420,7 @@ class CommandBuilder(SkillBase):
     def __init__(self):
         super().__init__("command_builder", "Build shell commands", "tools")
 
-    def execute(self, description: str = "", os_type: str = "linux", **kwargs) -> Dict:
+    def execute(self, description: str = "", os_type: str = "linux", **kwargs) -> dict:
         desc = description.lower()
         commands = []
         explanation = []
@@ -481,21 +483,21 @@ class CommandBuilder(SkillBase):
 class ExtendedSkills:
     """مدير المهارات الموسعة"""
     def __init__(self):
-        self.skills: Dict[str, SkillBase] = {}
+        self.skills: dict[str, SkillBase] = {}
 
     def register(self, skill: SkillBase):
         self.skills[skill.name] = skill
 
-    def get(self, name: str) -> Optional[SkillBase]:
+    def get(self, name: str) -> SkillBase | None:
         return self.skills.get(name)
 
-    def execute(self, name: str, **kwargs) -> Dict:
+    def execute(self, name: str, **kwargs) -> dict:
         skill = self.get(name)
         if not skill:
             return {"error": f"Skill '{name}' not found"}
         return skill.execute(**kwargs)
 
-    def list(self) -> List[Dict]:
+    def list(self) -> list[dict]:
         return [s.info() for s in self.skills.values()]
 
     def count(self) -> int:

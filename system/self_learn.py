@@ -25,12 +25,7 @@ import logging
 import os
 import re
 import sqlite3
-import subprocess
-import sys
 import time
-import textwrap
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple, Set
 
 logger = logging.getLogger("ahs.selflearn")
 
@@ -58,7 +53,7 @@ class ErrorEntry:
                  line_no: int,
                  code_snippet: str,
                  stack_trace: str,
-                 context: Optional[Dict] = None):
+                 context: dict | None = None):
         self.id = hashlib.md5(f"{error_type}:{file_path}:{line_no}".encode()).hexdigest()[:12]
         self.error_type = error_type
         self.message = message[:500]
@@ -83,7 +78,7 @@ class ErrorEntry:
             return "MEDIUM"
         return "LOW"
     
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "type": self.error_type,
@@ -166,7 +161,7 @@ class ErrorAnalyzer:
             """)
             conn.commit()
     
-    def log_error(self, entry: ErrorEntry) -> Dict:
+    def log_error(self, entry: ErrorEntry) -> dict:
         """تسجيل خطأ — إذا كان مكرراً، يزيد العداد"""
         with sqlite3.connect(self.db_path) as conn:
             existing = conn.execute(
@@ -211,7 +206,7 @@ class ErrorAnalyzer:
         
         return result
     
-    def _check_known_fix(self, entry: ErrorEntry) -> Optional[str]:
+    def _check_known_fix(self, entry: ErrorEntry) -> str | None:
         """بحث في قاعدة البيانات عن حل معروف لنفس نوع الخطأ"""
         with sqlite3.connect(self.db_path) as conn:
             # هل هناك خطأ مشابه في نفس الملف؟
@@ -269,8 +264,8 @@ class ErrorAnalyzer:
     # ─── Performance Tracking ───────────────────────────
     
     def log_performance(self, operation: str, duration_ms: float, 
-                        success: bool = True, file_path: Optional[str] = None,
-                        context: Optional[str] = None):
+                        success: bool = True, file_path: str | None = None,
+                        context: str | None = None):
         """تسجيل أداء عملية معينة"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -279,7 +274,7 @@ class ErrorAnalyzer:
             """, (operation, duration_ms, time.time(), success, file_path, context))
             conn.commit()
     
-    def get_slowest_operations(self, limit: int = 10) -> List[Dict]:
+    def get_slowest_operations(self, limit: int = 10) -> list[dict]:
         """الحصول على أبطأ العمليات"""
         with sqlite3.connect(self.db_path) as conn:
             rows = conn.execute("""
@@ -303,7 +298,7 @@ class ErrorAnalyzer:
                 for r in rows
             ]
     
-    def _suggest_optimization(self, operation: str, avg_ms: float) -> Optional[str]:
+    def _suggest_optimization(self, operation: str, avg_ms: float) -> str | None:
         """اقتراح تحسينات للعمليات البطيئة"""
         if avg_ms > 10000:  # >10s
             return "CRITICAL: تحتاج إلى تحسين فوري"
@@ -313,7 +308,7 @@ class ErrorAnalyzer:
             return f"MEDIUM: {avg_ms/1000:.1f}s، استخدم caching"
         return None
     
-    def get_frequent_errors(self, limit: int = 10) -> List[Dict]:
+    def get_frequent_errors(self, limit: int = 10) -> list[dict]:
         """الأخطاء الأكثر تكراراً"""
         with sqlite3.connect(self.db_path) as conn:
             rows = conn.execute("""
@@ -340,7 +335,7 @@ class ErrorAnalyzer:
                 for r in rows
             ]
     
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """إحصائيات عامة"""
         with sqlite3.connect(self.db_path) as conn:
             total_errors = conn.execute("SELECT COUNT(*) FROM errors").fetchone()[0]
@@ -380,7 +375,7 @@ class CodeImprover:
         self.root = root
         self.analyzer = ErrorAnalyzer()
     
-    def scan_for_issues(self, file_path: str) -> List[Dict]:
+    def scan_for_issues(self, file_path: str) -> list[dict]:
         """فحص ملف وإرجاع كل المشاكل المكتشفة"""
         full_path = os.path.join(self.root, file_path) if not os.path.isabs(file_path) else file_path
         if not os.path.exists(full_path):
@@ -450,7 +445,7 @@ class CodeImprover:
         
         return issues
     
-    def suggest_performance_improvements(self, file_path: str) -> List[Dict]:
+    def suggest_performance_improvements(self, file_path: str) -> list[dict]:
         """اقتراح تحسينات أداء"""
         full_path = os.path.join(self.root, file_path) if not os.path.isabs(file_path) else file_path
         if not os.path.exists(full_path):
@@ -525,7 +520,7 @@ class PatternLearner:
     def __init__(self, analyzer: ErrorAnalyzer):
         self.analyzer = analyzer
     
-    def learn_from_performance(self) -> List[Dict]:
+    def learn_from_performance(self) -> list[dict]:
         """تعلم من أداء النظام واقتراح تحسينات"""
         slow = self.analyzer.get_slowest_operations(5)
         
@@ -542,7 +537,7 @@ class PatternLearner:
         
         return improvements
     
-    def predict_risky_files(self) -> List[Dict]:
+    def predict_risky_files(self) -> list[dict]:
         """تحديد الملفات التي فيها أخطاء متكررة — مرتفعة الخطورة"""
         with sqlite3.connect(self.analyzer.db_path) as conn:
             # Files with most errors
@@ -567,7 +562,7 @@ class PatternLearner:
                 for r in rows
             ]
     
-    def get_system_improvements(self) -> List[Dict]:
+    def get_system_improvements(self) -> list[dict]:
         """توليف جميع التحسينات المقترحة"""
         improvements = []
         
@@ -623,7 +618,7 @@ class SelfLearningSystem:
         self.analyzer = ErrorAnalyzer()
         self.learner = PatternLearner(self.analyzer)
         self.improver = CodeImprover()
-        self.performance_history: List[float] = []
+        self.performance_history: list[float] = []
     
     def on_startup(self):
         """عند بدء التشغيل — فحص وتحليل الماضي"""
@@ -646,8 +641,8 @@ class SelfLearningSystem:
             "improvements_suggested": len(improvements),
         }
     
-    def on_error(self, error: Exception, file_path: Optional[str] = None, 
-                 line_no: Optional[int] = None, context: Optional[Dict] = None) -> Dict:
+    def on_error(self, error: Exception, file_path: str | None = None, 
+                 line_no: int | None = None, context: dict | None = None) -> dict:
         """
         معالجة خطأ — تسجيل، تحليل، اقتراح إصلاح.
         هذه الدالة تستخدم في try-except blocks في كل النظام.
@@ -689,7 +684,7 @@ class SelfLearningSystem:
         return result
     
     def on_success(self, operation: str, duration_ms: float, 
-                   file_path: Optional[str] = None):
+                   file_path: str | None = None):
         """تسجيل عملية ناجحة — لتحليل الأداء"""
         self.analyzer.log_performance(operation, duration_ms, True, file_path)
         self.performance_history.append(duration_ms)
@@ -698,11 +693,11 @@ class SelfLearningSystem:
         if len(self.performance_history) > 1000:
             self.performance_history = self.performance_history[-500:]
     
-    def suggest_improvements(self) -> List[Dict]:
+    def suggest_improvements(self) -> list[dict]:
         """الحصول على كل التحسينات المقترحة حالاً"""
         return self.learner.get_system_improvements()
     
-    def auto_fix_files(self) -> Dict[str, bool]:
+    def auto_fix_files(self) -> dict[str, bool]:
         """
         محاولة إصلاح كل الملفات تلقائياً (إزالة imports غير مستخدمة).
         يعيد dict: {file_name: was_fixed}
@@ -723,7 +718,7 @@ class SelfLearningSystem:
         
         return results
     
-    def report(self) -> Dict:
+    def report(self) -> dict:
         """تقرير كامل عن حالة التعلم الذاتي"""
         return {
             "analyzer": self.analyzer.get_stats(),
@@ -771,7 +766,7 @@ if __name__ == "__main__":
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     print(f"\n{'='*60}")
-    print(f"  🧪 AHS Self-Learning System — Test")
+    print("  🧪 AHS Self-Learning System — Test")
     print(f"{'='*60}\n")
     
     sls = SelfLearningSystem()
@@ -782,7 +777,7 @@ if __name__ == "__main__":
     print(f"  📊 Stats: {json.dumps(startup['stats'], indent=4)}")
     
     # 2. Simulate errors
-    print(f"\n  🧪 Simulating errors...")
+    print("\n  🧪 Simulating errors...")
     try:
         1 / 0
     except Exception as e:
@@ -803,14 +798,14 @@ if __name__ == "__main__":
         print(f"  📝 Same error again: {result['action']} (total={result.get('total_count', 1)})")
     
     # 3. Performance tracking
-    print(f"\n  📊 Simulating performance data...")
+    print("\n  📊 Simulating performance data...")
     sls.on_success("process_task", 150, "bridge/mcp_http_server.py")
     sls.on_success("process_task", 7800, "bridge/mcp_http_server.py")
     sls.on_success("web_search", 320, "system/tools.py")
     sls.on_success("process_task", 9200, "bridge/mcp_http_server.py")
     
     # 4. Report
-    print(f"\n  📋 Self-Learning Report:")
+    print("\n  📋 Self-Learning Report:")
     report = sls.report()
     print(f"     Errors logged: {report['analyzer']['total_errors_logged']}")
     print(f"     Fix rate: {report['analyzer']['fix_rate']}%")
@@ -822,13 +817,13 @@ if __name__ == "__main__":
             print(f"       • {imp.get('message', imp.get('suggestion', ''))[:80]}")
     
     # 5. Auto-fix
-    print(f"\n  🧹 Auto-fixing unused imports...")
+    print("\n  🧹 Auto-fixing unused imports...")
     fixed = sls.auto_fix_files()
     if fixed:
         print(f"     Fixed: {list(fixed.keys())}")
     else:
-        print(f"     Nothing to fix (clean)")
+        print("     Nothing to fix (clean)")
     
     print(f"\n{'='*60}")
-    print(f"  ✅ Self-Learning System ready for integration")
+    print("  ✅ Self-Learning System ready for integration")
     print(f"{'='*60}")

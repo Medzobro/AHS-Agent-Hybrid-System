@@ -4,10 +4,14 @@ AHS - Response Synthesizer
 Combines OpenClaw (fast) and Hermes (deep) into one integrated response.
 """
 
-import json, os, sys, time
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from bridge.hermes_bridge import HermesBridge
-from typing import Dict
+
 
 class ResponseSynthesizer:
     """
@@ -20,7 +24,7 @@ class ResponseSynthesizer:
     def __init__(self):
         self.hermes = HermesBridge()
 
-    def synthesize(self, task: str) -> Dict:
+    def synthesize(self, task: str) -> dict:
         """يجمع OpenClaw + Hermes في رد واحد"""
         start = time.time()
 

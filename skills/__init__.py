@@ -16,9 +16,9 @@ Example:
 """
 
 from .code_assistant import CodeAssistant
+from .extended_skills import ExtendedSkills, SkillBase
 from .hybrid_skills import HybridSkills
 from .synthesizer import ResponseSynthesizer
-from .extended_skills import ExtendedSkills, SkillBase
 
 __all__ = [
     "CodeAssistant",

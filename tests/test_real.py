@@ -6,7 +6,6 @@ Tests that connect to real Hermes MCP bridge.
 These prove AHS works end-to-end.
 """
 
-import json
 import os
 import sys
 import time

@@ -13,12 +13,13 @@ Features:
   - Profiles متعددة
 """
 
-import json, os, sys, time
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
 import copy
-
+import json
+import os
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
 # الإعدادات الافتراضية للنظام
 DEFAULT_CONFIG = {
@@ -90,11 +91,11 @@ class ConfigProfile:
     """ملف تعريف إعدادات"""
     name: str
     description: str
-    config: Dict
+    config: dict
     created: float = field(default_factory=time.time)
     modified: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "description": self.description,
@@ -115,12 +116,12 @@ class ConfigManager:
     - تحقق من الصحة
     """
 
-    def __init__(self, config_path: Optional[str] = None):
-        self.config: Dict = copy.deepcopy(DEFAULT_CONFIG)
-        self.profiles: Dict[str, ConfigProfile] = {}
+    def __init__(self, config_path: str | None = None):
+        self.config: dict = copy.deepcopy(DEFAULT_CONFIG)
+        self.profiles: dict[str, ConfigProfile] = {}
         self.current_profile: str = "default"
-        self.config_file: Optional[str] = None
-        self._loaded_files: List[str] = []
+        self.config_file: str | None = None
+        self._loaded_files: list[str] = []
         self._env_prefix = "AHS_"
 
         if config_path:
@@ -142,7 +143,7 @@ class ConfigManager:
         except (json.JSONDecodeError, Exception) as e:
             raise ConfigValidationError(f"فشل تحميل {path}: {e}")
 
-    def load_env(self, prefix: Optional[str] = None) -> Dict:
+    def load_env(self, prefix: str | None = None) -> dict:
         """تحميل إعدادات من المتغيرات البيئية"""
         prefix = prefix or self._env_prefix
         env_config = {}
@@ -181,7 +182,7 @@ class ConfigManager:
             current = current[part]
         current[parts[-1]] = value
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate config"""
         errors = []
         required_keys = ["model.provider", "model.primary"]
@@ -200,7 +201,7 @@ class ConfigManager:
 
         return errors
 
-    def save(self, path: Optional[str] = None) -> bool:
+    def save(self, path: str | None = None) -> bool:
         """Save config إلى ملف"""
         save_path = path or self.config_file or "ahs_config.json"
         try:
@@ -236,7 +237,7 @@ class ConfigManager:
         self.config = copy.deepcopy(DEFAULT_CONFIG)
         self._loaded_files = []
 
-    def summary(self) -> Dict:
+    def summary(self) -> dict:
         """Config summary"""
         return {
             "version": self.get("ahs.version"),
@@ -258,7 +259,7 @@ class ConfigManager:
         return json.dumps(self.config, indent=2 if pretty else None,
                          ensure_ascii=False)
 
-    def _deep_merge(self, base: Dict, overlay: Dict):
+    def _deep_merge(self, base: dict, overlay: dict):
         """دمج عميق بين قاموسين"""
         for key, value in overlay.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -266,7 +267,7 @@ class ConfigManager:
             else:
                 base[key] = copy.deepcopy(value)
 
-    def _set_nested(self, d: Dict, key: str, value: Any):
+    def _set_nested(self, d: dict, key: str, value: Any):
         """Set value في قاموس متداخل"""
         parts = key.split(".")
         current = d
@@ -330,7 +331,7 @@ def config_for_testing() -> ConfigManager:
 
 # ========== أدوات مساعدة ==========
 
-def validate_config_file(path: str) -> Dict:
+def validate_config_file(path: str) -> dict:
     """التحقق من صحة ملف إعدادات"""
     result = {"valid": False, "errors": [], "warnings": []}
 
@@ -360,7 +361,7 @@ def generate_default_config(path: str = "ahs_config.json"):
     return f"❌ فشل إنشاء {path}"
 
 
-def diff_configs(config_a: Dict, config_b: Dict, prefix: str = "") -> List[str]:
+def diff_configs(config_a: dict, config_b: dict, prefix: str = "") -> list[str]:
     """مقارنة إعدادين وإظهار الفروق"""
     differences = []
     all_keys = set(config_a.keys()) | set(config_b.keys())
@@ -391,7 +392,7 @@ if __name__ == "__main__":
     print(f"\nبعد التعديل: {cfg.get('agent.max_workers')}")
 
     # ملخص
-    print(f"\n📊 الملخص:")
+    print("\n📊 الملخص:")
     for k, v in cfg.summary().items():
         print(f"  {k}: {v}")
 

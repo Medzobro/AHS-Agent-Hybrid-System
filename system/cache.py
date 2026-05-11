@@ -12,11 +12,13 @@ Features:
   - Serialization
 """
 
-import json, os, sys, time, threading
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
+import json
+import threading
+import time
 from collections import OrderedDict
-from datetime import datetime
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -39,7 +41,7 @@ class CacheEntry:
     def age(self) -> float:
         return time.time() - self.created_at
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "key": self.key,
             "ttl": self.ttl,
@@ -60,7 +62,7 @@ class Cache:
         self.max_size = max_size
         self.default_ttl = default_ttl
         self.max_memory = max_memory_mb * 1024 * 1024
-        self._data: Dict[str, CacheEntry] = OrderedDict()
+        self._data: dict[str, CacheEntry] = OrderedDict()
         self._lock = threading.Lock()
         self._stats = {
             "hits": 0, "misses": 0, "evictions": 0,
@@ -86,7 +88,7 @@ class Cache:
             self._stats["hits"] += 1
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: float | None = None) -> bool:
         """Store value"""
         with self._lock:
             # حساب الحجم
@@ -139,7 +141,7 @@ class Cache:
         return False
 
     def get_or_set(self, key: str, factory: Callable,
-                   ttl: Optional[float] = None) -> Any:
+                   ttl: float | None = None) -> Any:
         """Get or create value"""
         value = self.get(key)
         if value is not None:
@@ -168,11 +170,11 @@ class Cache:
     def size(self) -> int:
         return len(self._data)
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         with self._lock:
             return [k for k, v in self._data.items() if not v.expired]
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         total = self._stats["hits"] + self._stats["misses"]
         hit_rate = (self._stats["hits"] / total * 100) if total > 0 else 0
 
@@ -237,16 +239,16 @@ class ToolResultCache(Cache):
 class CacheManager:
     """Central cache manager"""
     def __init__(self):
-        self.caches: Dict[str, Cache] = {}
+        self.caches: dict[str, Cache] = {}
         self.default = Cache()
 
     def register(self, name: str, cache: Cache):
         self.caches[name] = cache
 
-    def get(self, name: str) -> Optional[Cache]:
+    def get(self, name: str) -> Cache | None:
         return self.caches.get(name)
 
-    def get_all_stats(self) -> Dict:
+    def get_all_stats(self) -> dict:
         return {
             name: cache.get_stats()
             for name, cache in self.caches.items()

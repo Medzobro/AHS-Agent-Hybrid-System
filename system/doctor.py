@@ -14,11 +14,14 @@ Checks:
   - Performance
 """
 
-import json, os, sys, time, subprocess, platform, socket
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
+import json
+import os
+import platform
+import socket
+import subprocess
+import time
+from dataclasses import dataclass
 from datetime import datetime
-import shutil
 
 
 @dataclass
@@ -27,13 +30,13 @@ class CheckResult:
     name: str
     status: str  # pass, fail, warn, error
     message: str
-    details: Optional[Dict] = None
+    details: dict | None = None
     duration: float = 0.0
 
     def passed(self) -> bool:
         return self.status == "pass"
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "status": self.status,
@@ -332,7 +335,7 @@ class Doctor:
     """
 
     def __init__(self):
-        self.checks: List[HealthCheck] = [
+        self.checks: list[HealthCheck] = [
             HermesGatewayCheck(),
             ApiKeyCheck(),
             FileSystemCheck(),
@@ -345,7 +348,7 @@ class Doctor:
     def add_check(self, check: HealthCheck):
         self.checks.append(check)
 
-    def diagnose(self) -> Dict:
+    def diagnose(self) -> dict:
         """Run all checks"""
         results = []
         start = time.time()
@@ -384,7 +387,7 @@ class Doctor:
             "recommendations": self._recommendations(results),
         }
 
-    def _recommendations(self, results: List[CheckResult]) -> List[str]:
+    def _recommendations(self, results: list[CheckResult]) -> list[str]:
         """Generate recommendations based on check results"""
         recs = []
         for r in results:
@@ -429,7 +432,7 @@ class Doctor:
         return "\n".join(lines)
 
 
-def quick_health() -> Dict:
+def quick_health() -> dict:
     """Quick health check"""
     doctor = Doctor()
     return doctor.diagnose()

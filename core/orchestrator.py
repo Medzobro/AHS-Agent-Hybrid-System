@@ -11,10 +11,9 @@ Principle: Each task is analyzed and then directed to the most suitable party.
 
 import json
 import os
-import sys
 import time
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class TaskType(Enum):
@@ -37,10 +36,10 @@ class HybridOrchestrator:
         self.memory_file = os.path.join(
             os.path.dirname(__file__), "../bridge/shared_memory.json"
         )
-        self.history: List[Dict] = []
-        self.memory: Dict = self._load_memory()
+        self.history: list[dict] = []
+        self.memory: dict = self._load_memory()
 
-    def _load_memory(self) -> Dict:
+    def _load_memory(self) -> dict:
         """Load shared memory"""
         if os.path.exists(self.memory_file):
             try:
@@ -56,7 +55,7 @@ class HybridOrchestrator:
         with open(self.memory_file, "w") as f:
             json.dump(self.memory, f, indent=2, ensure_ascii=False)
 
-    def classify_task(self, task: str) -> Tuple[TaskType, str]:
+    def classify_task(self, task: str) -> tuple[TaskType, str]:
         """
         Analyze the task and determine its type and the appropriate party.
         """
@@ -93,7 +92,7 @@ class HybridOrchestrator:
 
         return TaskType.HYBRID, "default"
 
-    def plan_execution(self, task: str, task_type: TaskType) -> Dict:
+    def plan_execution(self, task: str, task_type: TaskType) -> dict:
         """
         Plan task execution — who does what.
         """
@@ -156,7 +155,7 @@ class HybridOrchestrator:
         self.memory["learnings"] = self.memory["learnings"][-100:]
         self._save_memory()
 
-    def get_relevant_learnings(self, task: str, limit: int = 5) -> List[Dict]:
+    def get_relevant_learnings(self, task: str, limit: int = 5) -> list[dict]:
         """Retrieve lessons related to the task"""
         learnings = self.memory.get("learnings", [])
         task_lower = task.lower()
@@ -167,7 +166,7 @@ class HybridOrchestrator:
                 relevant.append(l)
         return relevant[:limit]
 
-    def run(self, task: str, user_id: str = "user") -> Dict:
+    def run(self, task: str, user_id: str = "user") -> dict:
         """
         Run the task through the hybrid system.
         This function is called from OpenClaw when a command arrives.
@@ -217,6 +216,6 @@ if __name__ == "__main__":
         print(f"📥 Task: {task}")
         result = orch.run(task)
         print(f"📊 Classification: {result['classification']['type']}")
-        print(f"📋 Plan:")
+        print("📋 Plan:")
         for step in result["plan"]["steps"]:
             print(f"   {step['action']} ← {step['by']}")

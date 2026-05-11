@@ -7,13 +7,11 @@ Fast, reliable, no Python subprocess overhead.
 """
 
 import json
+import logging
 import os
 import sys
 import time
-import logging
-from typing import Dict, List, Optional, Any
 from urllib.request import Request, urlopen
-from urllib.error import URLError
 
 WORKSPACE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, WORKSPACE)
@@ -34,8 +32,8 @@ class HermesBridge:
     """Native MCP Bridge — HTTP only. No subprocess, no CLI."""
 
     def __init__(self):
-        self.last_response: Optional[str] = None
-        self.last_reasoning: Optional[str] = None
+        self.last_response: str | None = None
+        self.last_reasoning: str | None = None
         self._mcp_bridge = None
         self._check_mcp_module()
 
@@ -57,8 +55,8 @@ class HermesBridge:
         skills: str = "",
         timeout: int = 60,
         thinking_mode: bool = False,
-        context: Optional[List[Dict]] = None,
-    ) -> Dict:
+        context: list[dict] | None = None,
+    ) -> dict:
         """Send a task. HTTP first, MCP second."""
         # 1. Try MCP HTTP Bridge
         try:
@@ -75,7 +73,7 @@ class HermesBridge:
 
         return self._error("all_methods_failed", "cannot_reach_hermes")
 
-    def _send_via_http(self, task: str, timeout: int) -> Dict:
+    def _send_via_http(self, task: str, timeout: int) -> dict:
         """MCP HTTP Bridge — fastest path."""
         payload = json.dumps({"task": task, "mode": "hybrid", "timeout": timeout}).encode()
         url = f"http://{MCP_HTTP_HOST}:{MCP_HTTP_PORT}/task"
@@ -103,7 +101,7 @@ class HermesBridge:
             "elapsed": elapsed,
         }
 
-    def _send_via_mcp(self, task: str, timeout: int) -> Dict:
+    def _send_via_mcp(self, task: str, timeout: int) -> dict:
         """MCP Python bridge — openclaw_mcp_bridge."""
         t0 = time.time()
         try:
@@ -133,7 +131,7 @@ class HermesBridge:
             "elapsed": elapsed,
         }
 
-    def _error(self, code: str, message: str) -> Dict:
+    def _error(self, code: str, message: str) -> dict:
         """Return structured error without CLI fallback."""
         return {
             "success": False,
@@ -143,11 +141,11 @@ class HermesBridge:
             "elapsed": 0,
         }
 
-    def analyze_with_hermes(self, task: str) -> Dict:
+    def analyze_with_hermes(self, task: str) -> dict:
         """Analyze with Hermes — alias for send_task."""
         return self.send_task(task, timeout=90)
 
-    def status(self) -> Dict:
+    def status(self) -> dict:
         """Bridge health."""
         return {
             "http_available": self._check_http(),

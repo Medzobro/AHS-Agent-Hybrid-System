@@ -12,7 +12,7 @@ export type Complexity = "simple" | "medium" | "complex" | "research";
 export interface TaskClassification {
   agent: AgentId;
   complexity: Complexity;
-  confidence: number;     // 0.0 - 1.0
+  confidence: number; // 0.0 - 1.0
   reason: string;
   requiredSkills: string[];
 }
@@ -24,8 +24,8 @@ export interface PlanStep {
   agent: AgentId;
   description: string;
   input?: unknown;
-  dependencies: string[];  // step IDs that must complete first
-  timeout: number;          // seconds
+  dependencies: string[]; // step IDs that must complete first
+  timeout: number; // seconds
 }
 
 /** Complete execution plan */
@@ -33,8 +33,8 @@ export interface ExecutionPlan {
   task: string;
   classification: TaskClassification;
   steps: PlanStep[];
-  parallel: boolean;        // can steps run in parallel?
-  maxConcurrency: number;   // max parallel agents
+  parallel: boolean; // can steps run in parallel?
+  maxConcurrency: number; // max parallel agents
   context: Record<string, unknown>;
 }
 
@@ -75,7 +75,7 @@ export interface MCPServerConfig {
   endpoint?: string;
   command?: string;
   args?: string[];
-  tools: string[];           // enabled tool names (empty = all)
+  tools: string[]; // enabled tool names (empty = all)
 }
 
 /** Orchestrator event log entry */
@@ -102,20 +102,6 @@ export interface OrchestrationResult {
 
 /** Agent capabilities — what each agent can do */
 export const AGENT_CAPABILITIES: Record<AgentId, string[]> = {
-  hermes: [
-    "deep_reasoning",
-    "research",
-    "code_review",
-    "planning",
-    "analysis",
-    "multi_skill",
-  ],
-  openclaw: [
-    "fast_execution",
-    "file_operations",
-    "shell_commands",
-    "git_operations",
-    "tools_invocation",
-    "delegation",
-  ],
+  hermes: ["deep_reasoning", "research", "code_review", "planning", "analysis", "multi_skill"],
+  openclaw: ["fast_execution", "file_operations", "shell_commands", "git_operations", "tools_invocation", "delegation"],
 };

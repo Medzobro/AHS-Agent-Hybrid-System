@@ -11,10 +11,15 @@ OpenClaw يدير وكلاء متعددين:
   - Task Agent: مهام محددة
 """
 
-import json, os, sys, time, uuid, threading, logging
-from typing import Dict, List, Optional, Any, Callable
-from enum import Enum
+import logging
+import os
+import sys
+import threading
+import time
+import uuid
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from bridge.hermes_bridge import HermesBridge
@@ -40,15 +45,15 @@ class AgentTask:
     role: AgentRole = AgentRole.EXECUTOR
     description: str = ""
     input_data: Any = None
-    skills: List[str] = field(default_factory=lambda: ["dogfood"])
+    skills: list[str] = field(default_factory=lambda: ["dogfood"])
     priority: int = 5  # 1-10
     status: str = "pending"  # pending, running, completed, failed
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     created_at: float = field(default_factory=time.time)
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
-    depends_on: List[str] = field(default_factory=list)
+    started_at: float | None = None
+    completed_at: float | None = None
+    depends_on: list[str] = field(default_factory=list)
     timeout: int = 120
 
 
@@ -58,11 +63,11 @@ class AgentWorker:
     كل وكيل يرتبط بدور محدد.
     """
 
-    def __init__(self, role: AgentRole, name: Optional[str] = None):
+    def __init__(self, role: AgentRole, name: str | None = None):
         self.role = role
         self.name = name or f"agent-{role.value}-{uuid.uuid4().hex[:6]}"
         self.hermes = HermesBridge()
-        self.current_task: Optional[AgentTask] = None
+        self.current_task: AgentTask | None = None
         self.stats = {"tasks_completed": 0, "tasks_failed": 0, "total_time": 0.0}
 
     def can_handle(self, task: AgentTask) -> bool:
@@ -174,7 +179,7 @@ class AgentWorker:
         )
         return result.get("response", {}).get("content", "") or ""
 
-    def summary(self) -> Dict:
+    def summary(self) -> dict:
         """ملخص الوكيل"""
         return {
             "name": self.name,
@@ -192,10 +197,10 @@ class MultiAgentOrchestrator:
     """
 
     def __init__(self):
-        self.workers: Dict[str, AgentWorker] = {}
-        self.task_queue: List[AgentTask] = []
-        self.completed: List[AgentTask] = []
-        self.failed: List[AgentTask] = []
+        self.workers: dict[str, AgentWorker] = {}
+        self.task_queue: list[AgentTask] = []
+        self.completed: list[AgentTask] = []
+        self.failed: list[AgentTask] = []
         self.lock = threading.Lock()
         self.max_parallel = 3
         self.stats = {"tasks_created": 0, "tasks_completed": 0, "tasks_failed": 0}
@@ -219,8 +224,8 @@ class MultiAgentOrchestrator:
             self.register_worker(w)
 
     def create_task(self, description: str, role: AgentRole = AgentRole.EXECUTOR,
-                    priority: int = 5, skills: Optional[List[str]] = None,
-                    depends_on: Optional[List[str]] = None) -> AgentTask:
+                    priority: int = 5, skills: list[str] | None = None,
+                    depends_on: list[str] | None = None) -> AgentTask:
         """إنشاء مهمة جديدة"""
         task = AgentTask(
             role=role,
@@ -235,7 +240,7 @@ class MultiAgentOrchestrator:
             self.stats["tasks_created"] += 1
         return task
 
-    def find_worker(self, task: AgentTask) -> Optional[str]:
+    def find_worker(self, task: AgentTask) -> str | None:
         """إيجاد وكيل مناسب للمهمة"""
         # ابحث عن وكيل غير مشغول بنفس الدور
         for name, worker in self.workers.items():
@@ -247,10 +252,10 @@ class MultiAgentOrchestrator:
                 return name
         return None
 
-    def run_all(self, timeout: int = 300) -> Dict:
+    def run_all(self, timeout: int = 300) -> dict:
         """تشغيل كل المهام في قائمة الانتظار"""
         start = time.time()
-        running: Dict[str, AgentTask] = {}
+        running: dict[str, AgentTask] = {}
 
         while (self.task_queue or running) and (time.time() - start < timeout):
             # إضافة مهام جديدة للعمال المتاحين
@@ -319,13 +324,13 @@ class MultiAgentOrchestrator:
             "stats": self.stats,
         }
 
-    def run_parallel(self, descriptions: List[str]) -> Dict:
+    def run_parallel(self, descriptions: list[str]) -> dict:
         """تشغيل مهام متعددة بالتوازي"""
         for desc in descriptions:
             self.create_task(desc)
         return self.run_all()
 
-    def summary(self) -> Dict:
+    def summary(self) -> dict:
         """ملخص النظام متعدد الوكلاء"""
         return {
             "workers": {n: w.summary() for n, w in self.workers.items()},

@@ -12,12 +12,16 @@ Features:
   - Filters and search
 """
 
-import json, os, sys, time, logging, traceback
-from typing import Dict, List, Optional, Any, Callable
+import json
+import os
+import time
+import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 
 class LogLevel(Enum):
@@ -51,7 +55,7 @@ class LogEntry:
     component: str = "system"
     message: str = ""
     data: Any = None
-    traceback: Optional[str] = None
+    traceback: str | None = None
     id: str = field(default_factory=lambda: __import__("uuid").uuid4().hex[:8])
 
     @property
@@ -69,7 +73,7 @@ class LogEntry:
         }
         return icons.get(self.level, "📝")
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "time": self.timestamp,
             "level": self.level.name,
@@ -86,7 +90,7 @@ class LogStorage:
     """Log storage"""
 
     def __init__(self, max_entries: int = 1000):
-        self.entries: List[LogEntry] = []
+        self.entries: list[LogEntry] = []
         self.max_entries = max_entries
 
     def add(self, entry: LogEntry):
@@ -95,9 +99,9 @@ class LogStorage:
             self.entries = self.entries[-self.max_entries // 2:]
 
     def search(self, query: str = "",
-               level: Optional[LogLevel] = None,
-               component: Optional[str] = None,
-               limit: int = 50) -> List[LogEntry]:
+               level: LogLevel | None = None,
+               component: str | None = None,
+               limit: int = 50) -> list[LogEntry]:
         results = self.entries
         if query:
             results = [e for e in results if query.lower() in e.message.lower()]
@@ -124,7 +128,7 @@ class LogStorage:
     def count(self) -> int:
         return len(self.entries)
 
-    def stats(self) -> Dict:
+    def stats(self) -> dict:
         levels = {}
         components = {}
         for e in self.entries:
@@ -150,13 +154,13 @@ class AHSLogger:
     def __init__(self, name: str = "ahs",
                  level: LogLevel = LogLevel.INFO,
                  log_to_console: bool = True,
-                 log_to_file: Optional[str] = None):
+                 log_to_file: str | None = None):
         self.name = name
         self.level = level
         self.storage = LogStorage()
-        self.file_handler: Optional[FilePath] = None
+        self.file_handler: FilePath | None = None
         self.log_to_console = log_to_console
-        self.handlers: List[Callable[[LogEntry], None]] = []
+        self.handlers: list[Callable[[LogEntry], None]] = []
 
         if log_to_file:
             self.set_log_file(log_to_file)
@@ -224,13 +228,13 @@ class AHSLogger:
     def critical(self, message: str, component: str = "system", data: Any = None):
         self._log(LogLevel.CRITICAL, message, component, data)
 
-    def search(self, query: str = "", **kwargs) -> List[LogEntry]:
+    def search(self, query: str = "", **kwargs) -> list[LogEntry]:
         return self.storage.search(query, **kwargs)
 
     def export(self, path: str, format: str = "json"):
         self.storage.export(path, format)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         return self.storage.stats()
 
     def print_summary(self):

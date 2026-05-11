@@ -33,9 +33,9 @@ from .config_manager import ConfigManager
 from .doctor import Doctor
 from .integration import AHSIntegration
 from .logger import AHSLogger, LogLevel
-from .multi_agent import MultiAgentOrchestrator, AgentRole, AgentWorker
+from .multi_agent import AgentRole, AgentWorker, MultiAgentOrchestrator
 from .skill_manager import SkillManager
-from .tool_registry import ToolRegistry, ToolSpec, ToolCategory, ToolResult
+from .tool_registry import ToolCategory, ToolRegistry, ToolResult, ToolSpec
 
 __all__ = [
     "ConfigManager", "Doctor",

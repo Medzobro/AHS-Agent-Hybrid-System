@@ -13,12 +13,16 @@ Features:
   - Date/time utilities
 """
 
-import json, os, sys, time, math, re, hashlib
-from typing import Dict, List, Optional, Any, Tuple, Union
-from pathlib import Path
-from datetime import datetime, timedelta
+import hashlib
+import json
+import math
+import os
+import re
+import time
 from collections import Counter
-
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 # =========================
 #  Text Utilities
@@ -75,20 +79,20 @@ class TextUtils:
         return ' '.join(text.split())
 
     @staticmethod
-    def extract_code_blocks(text: str) -> List[Tuple[str, str]]:
+    def extract_code_blocks(text: str) -> list[tuple[str, str]]:
         """Extract code blocks from text"""
         pattern = r'```(\w*)\n(.*?)```'
         matches = re.findall(pattern, text, re.DOTALL)
         return [(lang.strip(), code.strip()) for lang, code in matches]
 
     @staticmethod
-    def extract_links(text: str) -> List[str]:
+    def extract_links(text: str) -> list[str]:
         """Extract links"""
         pattern = r'https?://[^\s<>"]+|www\.[^\s<>"]+'
         return re.findall(pattern, text)
 
     @staticmethod
-    def word_frequency(text: str, top: int = 10) -> List[Tuple[str, int]]:
+    def word_frequency(text: str, top: int = 10) -> list[tuple[str, int]]:
         """Most frequent words"""
         words = re.findall(r'\w+', text.lower())
         return Counter(words).most_common(top)
@@ -137,7 +141,7 @@ class DataUtils:
     """Data processing tools"""
 
     @staticmethod
-    def safe_get(data: Dict, *keys, default: Any = None) -> Any:
+    def safe_get(data: dict, *keys, default: Any = None) -> Any:
         """Safe nested value access"""
         current = data
         for key in keys:
@@ -150,12 +154,12 @@ class DataUtils:
         return current
 
     @staticmethod
-    def batch_process(items: List, batch_size: int = 10) -> List[List]:
+    def batch_process(items: list, batch_size: int = 10) -> list[list]:
         """Split list into batches"""
         return [items[i:i + batch_size] for i in range(0, len(items), batch_size)]
 
     @staticmethod
-    def deduplicate(items: List, key: Optional[Callable] = None) -> List:
+    def deduplicate(items: list, key: Callable | None = None) -> list:
         """Remove duplicates"""
         seen = set()
         result = []
@@ -167,7 +171,7 @@ class DataUtils:
         return result
 
     @staticmethod
-    def group_by(items: List, key_fn: Callable) -> Dict:
+    def group_by(items: list, key_fn: Callable) -> dict:
         """Group items by key"""
         groups = {}
         for item in items:
@@ -178,7 +182,7 @@ class DataUtils:
         return groups
 
     @staticmethod
-    def flatten(nested: List) -> List:
+    def flatten(nested: list) -> list:
         """Flatten nested list"""
         result = []
         for item in nested:
@@ -189,7 +193,7 @@ class DataUtils:
         return result
 
     @staticmethod
-    def deep_merge(base: Dict, overlay: Dict, overwrite: bool = True) -> Dict:
+    def deep_merge(base: dict, overlay: dict, overwrite: bool = True) -> dict:
         """Deep merge two dicts"""
         result = base.copy()
         for key, value in overlay.items():
@@ -200,12 +204,12 @@ class DataUtils:
         return result
 
     @staticmethod
-    def filter_dict(d: Dict, keys: List[str]) -> Dict:
+    def filter_dict(d: dict, keys: list[str]) -> dict:
         """Filter dict by keys"""
         return {k: d[k] for k in keys if k in d}
 
     @staticmethod
-    def rename_keys(d: Dict, mapping: Dict[str, str]) -> Dict:
+    def rename_keys(d: dict, mapping: dict[str, str]) -> dict:
         """Rename keys"""
         return {mapping.get(k, k): v for k, v in d.items()}
 
@@ -221,7 +225,7 @@ class DataUtils:
         return json.loads(text)
 
     @staticmethod
-    def to_table(data: List[Dict], headers: Optional[List[str]] = None) -> str:
+    def to_table(data: list[dict], headers: list[str] | None = None) -> str:
         """Convert list to text table"""
         if not data:
             return ""
@@ -284,7 +288,7 @@ class TimeUtils:
         return f"{seconds/3600:.1f}h"
 
     @staticmethod
-    def format_date(ts: Optional[float] = None, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+    def format_date(ts: float | None = None, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
         dt = datetime.fromtimestamp(ts) if ts else datetime.now()
         return dt.strftime(fmt)
 
@@ -318,13 +322,13 @@ class StatsUtils:
     """Statistical tools"""
 
     @staticmethod
-    def mean(values: List[float]) -> float:
+    def mean(values: list[float]) -> float:
         if not values:
             return 0.0
         return sum(values) / len(values)
 
     @staticmethod
-    def median(values: List[float]) -> float:
+    def median(values: list[float]) -> float:
         if not values:
             return 0.0
         sorted_vals = sorted(values)
@@ -335,20 +339,20 @@ class StatsUtils:
         return sorted_vals[mid]
 
     @staticmethod
-    def mode(values: List) -> Any:
+    def mode(values: list) -> Any:
         if not values:
             return None
         counter = Counter(values)
         return counter.most_common(1)[0][0]
 
     @staticmethod
-    def min_max(values: List[float]) -> Tuple[float, float]:
+    def min_max(values: list[float]) -> tuple[float, float]:
         if not values:
             return (0.0, 0.0)
         return (min(values), max(values))
 
     @staticmethod
-    def std_dev(values: List[float]) -> float:
+    def std_dev(values: list[float]) -> float:
         if len(values) < 2:
             return 0.0
         avg = StatsUtils.mean(values)
@@ -356,7 +360,7 @@ class StatsUtils:
         return math.sqrt(variance)
 
     @staticmethod
-    def percentile(values: List[float], pct: float) -> float:
+    def percentile(values: list[float], pct: float) -> float:
         if not values:
             return 0.0
         sorted_vals = sorted(values)
@@ -364,7 +368,7 @@ class StatsUtils:
         return sorted_vals[min(index, len(sorted_vals) - 1)]
 
     @staticmethod
-    def distribution(values: List[float], bins: int = 10) -> List[int]:
+    def distribution(values: list[float], bins: int = 10) -> list[int]:
         """توزيع القيم"""
         if not values:
             return []
@@ -388,7 +392,7 @@ class FileUtils:
 
     @staticmethod
     def safe_read(path: str, encoding: str = "utf-8",
-                  max_size: int = 10 * 1024 * 1024) -> Optional[str]:
+                  max_size: int = 10 * 1024 * 1024) -> str | None:
         """Safe file reading"""
         try:
             path_obj = Path(path)
@@ -427,7 +431,7 @@ class FileUtils:
 
     @staticmethod
     def find_files(directory: str, pattern: str = "*.py",
-                   recursive: bool = True) -> List[str]:
+                   recursive: bool = True) -> list[str]:
         """Find files"""
         path = Path(directory)
         if not path.exists():
@@ -458,7 +462,7 @@ class SecurityUtils:
         return h.hexdigest()
 
     @staticmethod
-    def hash_file(path: str, algorithm: str = "sha256") -> Optional[str]:
+    def hash_file(path: str, algorithm: str = "sha256") -> str | None:
         try:
             h = hashlib.new(algorithm)
             with open(path, "rb") as f:
@@ -474,7 +478,7 @@ class SecurityUtils:
         return re.sub(r'[^\w\-_\. ]', '_', name)
 
     @staticmethod
-    def is_safe_path(path: str, allowed_dirs: Optional[List[str]] = None) -> bool:
+    def is_safe_path(path: str, allowed_dirs: list[str] | None = None) -> bool:
         """Safe path check"""
         resolved = os.path.realpath(path)
         if allowed_dirs:

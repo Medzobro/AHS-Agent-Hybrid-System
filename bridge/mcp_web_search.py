@@ -15,11 +15,10 @@ import logging
 import os
 import sys
 import time
-from typing import Dict, List, Optional
 
 # استيراد الأداة الموجودة
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from skills.web_search import WebSearchTool, HAS_REQUESTS
+from skills.web_search import HAS_REQUESTS, WebSearchTool
 
 logger = logging.getLogger("ahs.mcp_web_search")
 
@@ -32,7 +31,7 @@ class RateLimiter:
     def __init__(self, max_calls: int = 30, window_sec: int = 60):
         self.max_calls = max_calls
         self.window_sec = window_sec
-        self._calls: List[float] = []
+        self._calls: list[float] = []
 
     def allow(self) -> bool:
         now = time.time()
@@ -66,7 +65,7 @@ class WebSearchMCP:
         self._tool = WebSearchTool()
         self._rate_limiter = RateLimiter(max_calls=30, window_sec=60)
 
-    def search(self, query: str, max_results: int = 5) -> Dict:
+    def search(self, query: str, max_results: int = 5) -> dict:
         """
         Search the web.
 
@@ -111,7 +110,7 @@ class WebSearchMCP:
             logger.error(f"Web search error: {e}")
             return {"success": False, "error": str(e)[:300]}
 
-    def fetch(self, url: str, timeout: int = 15) -> Dict:
+    def fetch(self, url: str, timeout: int = 15) -> dict:
         """
         Fetch a URL and extract its text content.
 
@@ -146,7 +145,7 @@ class WebSearchMCP:
             logger.error(f"Fetch error: {e}")
             return {"success": False, "error": str(e)[:300]}
 
-    def status(self) -> Dict:
+    def status(self) -> dict:
         """Get web search tool status."""
         s = self._tool.status()
         return {

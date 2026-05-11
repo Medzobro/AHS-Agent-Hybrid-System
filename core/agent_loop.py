@@ -6,18 +6,15 @@ The main loop of the hybrid system.
 Receives commands → classifies → plans → executes → responds.
 """
 
-import json
 import os
 import sys
 import time
-import traceback
-from typing import Dict, List, Optional, Any
 
 # Add paths
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.orchestrator import HybridOrchestrator, TaskType
 from bridge.hermes_bridge import HermesBridge
+from core.orchestrator import HybridOrchestrator
 from skills.synthesizer import ResponseSynthesizer
 
 
@@ -30,11 +27,11 @@ class HybridAgent:
     def __init__(self):
         self.orchestrator = HybridOrchestrator()
         self.hermes = HermesBridge()
-        self.history: List[Dict] = []
+        self.history: list[dict] = []
         self.version = "0.1.0"
         self.name = "AHS (Agent Hybrid System)"
 
-    def process(self, task: str, user_id: str = "user", hybrid: bool = False) -> Dict:
+    def process(self, task: str, user_id: str = "user", hybrid: bool = False) -> dict:
         """
         Process a task through the hybrid system.
 
@@ -125,7 +122,7 @@ class HybridAgent:
 
         return result
 
-    def _execute_step(self, action: str, assignee: str, task: str, log: List) -> Optional[str]:
+    def _execute_step(self, action: str, assignee: str, task: str, log: list) -> str | None:
         """Execute a single step of the plan"""
         try:
             if assignee == "hermes":
@@ -136,7 +133,7 @@ class HybridAgent:
             return f"⚠️ Execution error: {str(e)}"
         return None
 
-    def _hermes_execute(self, action: str, task: str, log: List) -> str:
+    def _hermes_execute(self, action: str, task: str, log: list) -> str:
         """Execute a step via Hermes with thinking mode"""
         # Important: use a simple format that doesn't prompt Hermes to use unavailable tools
         hermes_task = (
@@ -162,7 +159,7 @@ class HybridAgent:
         else:
             return f"⚠️ Hermes: {result.get('error', 'Unknown failure')}"
 
-    def _openclaw_respond(self, task: str, log: List) -> str:
+    def _openclaw_respond(self, task: str, log: list) -> str:
         """OpenClaw responds directly (me)"""
         # This function is called from OpenClaw itself
         # The response is written here as a last resort
@@ -196,9 +193,9 @@ class HybridAgent:
                 f"أفكر مع Hermes (DeepSeek R1) وأنفذ مع OpenClaw"
             )
 
-        return f"تم استلام المهمة. سأحللها مع Hermes وأعود لك بالنتيجة."
+        return "تم استلام المهمة. سأحللها مع Hermes وأعود لك بالنتيجة."
 
-    def status(self) -> Dict:
+    def status(self) -> dict:
         """System status"""
         return {
             "name": self.name,

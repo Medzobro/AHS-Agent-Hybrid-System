@@ -19,12 +19,18 @@ import http.server
 import json
 import logging
 import os
+import platform
 import subprocess
 import sys
+import time
 import urllib.parse
-from typing import Dict, Any
+from datetime import datetime
+from typing import Any
 
 # AHS Tools — import مرة واحدة
+# Module-level monitoring
+_request_count = 0
+_server_start = time.time()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from system.tools import MemoryStore, web_search
 
@@ -44,7 +50,7 @@ logger = logging.getLogger("ahs-mcp")
 
 # ─── Response helpers ─────────────────────────────────────────
 
-def json_response(data: Dict, status: int = 200) -> bytes:
+def json_response(data: dict, status: int = 200) -> bytes:
     body = json.dumps(data, ensure_ascii=False).encode("utf-8")
     return (
         f"HTTP/1.1 {status} {'OK' if status == 200 else 'Error'}\r\n"
@@ -52,7 +58,7 @@ def json_response(data: Dict, status: int = 200) -> bytes:
         f"Content-Length: {len(body)}\r\n"
         f"Access-Control-Allow-Origin: *\r\n"
         f"\r\n"
-    ).encode("utf-8") + body
+    ).encode() + body
 
 
 def error_response(message: str, status: int = 500) -> bytes:
@@ -61,7 +67,7 @@ def error_response(message: str, status: int = 500) -> bytes:
 
 # ─── Hermes sender ────────────────────────────────────────────
 
-def send_to_hermes(message: str, timeout: int = 120) -> Dict[str, Any]:
+def send_to_hermes(message: str, timeout: int = 120) -> dict[str, Any]:
     """
     أرسل رسالة إلى Hermes عبر CLI.
     في المرحلة القادمة: سيصبح عبر WebSocket MCP.
@@ -97,7 +103,20 @@ class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
             self._send_json({
                 "status": "ok",
                 "version": AHS_VERSION,
-                "uptime": 0,  # TODO: track uptime
+                "uptime": round(time.time() - _server_start, 2),
+                "requests": _request_count,
+            })
+        elif parsed.path == "/metrics":
+            self._send_json({
+                "requests_total": _request_count,
+                "uptime_seconds": round(time.time() - _server_start, 2),
+                "version": AHS_VERSION,
+            })
+        elif parsed.path == "/status":
+            self._send_json({
+                "server": "AHS MCP Bridge",
+                "uptime": round(time.time() - _server_start, 2),
+                "requests": _request_count,
             })
         else:
             self._send_json({"error": "Not found"}, 404)
@@ -134,7 +153,7 @@ class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
     
     # ─── Task handler ─────────────────────────────────
     
-    def _handle_task(self, data: Dict):
+    def _handle_task(self, data: dict):
         task = data.get("task", "")
         mode = data.get("mode", "auto")
         
@@ -171,7 +190,7 @@ class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
     
     # ─── Execute handler ──────────────────────────────
     
-    def _handle_execute(self, data: Dict):
+    def _handle_execute(self, data: dict):
         code = data.get("code", "")
         lang = data.get("lang", "python3")
         
@@ -215,7 +234,7 @@ class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
     
     # ─── Web Search handler ───────────────────────────
     
-    def _handle_web_search(self, data: Dict):
+    def _handle_web_search(self, data: dict):
         query = data.get("query", data.get("q", ""))
         count = data.get("count", 5)
         
@@ -236,7 +255,7 @@ class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
             self.__class__._memory = MemoryStore(db_path)
         return self.__class__._memory
     
-    def _handle_memory(self, data: Dict):
+    def _handle_memory(self, data: dict):
         action = data.get("action", "get")
         key = data.get("key", "")
         value = data.get("value", "")
@@ -255,20 +274,20 @@ class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
         else:
             self._send_json({"success": False, "error": f"Unknown action: {action}"}, 400)
     
-    def _handle_memory_search(self, data: Dict):
+    def _handle_memory_search(self, data: dict):
         query = data.get("query", "")
         mem = self._get_memory()
         results = mem.search(query)
         self._send_json({"success": True, "results": results})
     
-    def _handle_memory_stats(self, data: Dict):
+    def _handle_memory_stats(self, data: dict):
         mem = self._get_memory()
         stats = mem.stats()
         self._send_json({"success": True, **stats})
     
     # ─── Helpers ──────────────────────────────────────
     
-    def _send_json(self, data: Dict, status: int = 200):
+    def _send_json(self, data: dict, status: int = 200):
         self._send_raw(json_response(data, status))
     
     def _send_raw(self, data: bytes):
@@ -286,12 +305,12 @@ class ReuseHTTPServer(http.server.ThreadingHTTPServer):
 def main():
     print(f"\n{'='*50}")
     print(f"  🔌 AHS MCP Bridge Server v{AHS_VERSION}")
-    print(f"  ربط TypeScript Core ↔ Python Service")
+    print("  ربط TypeScript Core ↔ Python Service")
     print(f"{'='*50}")
     print(f"\n  🌐 Listening on {HOST}:{PORT}")
-    print(f"     GET  /health  → Health check")
-    print(f"     POST /task    → Process task via Hermes")
-    print(f"     POST /execute → Execute code\n")
+    print("     GET  /health  → Health check")
+    print("     POST /task    → Process task via Hermes")
+    print("     POST /execute → Execute code\n")
     
     server = ReuseHTTPServer((HOST, PORT), AHSMCPHandler)
     

@@ -13,12 +13,16 @@ AHS - Tool Registry
   - WebTool: تصفح الإنترنت
 """
 
-import json, os, sys, time, uuid, inspect, hashlib
-from typing import Dict, List, Optional, Any, Callable, get_type_hints
+import builtins
+import hashlib
+import json
+import time
+import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-import traceback
+from typing import Any
 
 
 class ToolCategory(Enum):
@@ -41,8 +45,8 @@ class ToolSpec:
     description: str
     category: ToolCategory
     handler: Callable
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    required_permissions: List[str] = field(default_factory=list)
+    parameters: dict[str, Any] = field(default_factory=dict)
+    required_permissions: list[str] = field(default_factory=list)
     timeout: int = 30
     rate_limit: int = 0  # calls per minute, 0 = unlimited
     enabled: bool = True
@@ -51,7 +55,7 @@ class ToolSpec:
     requires_hermes: bool = False
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "description": self.description,
@@ -68,14 +72,14 @@ class ToolSpec:
 class ToolResult:
     """نتيجة تنفيذ أداة"""
     def __init__(self, success: bool, data: Any = None,
-                 error: Optional[str] = None, duration: float = 0.0):
+                 error: str | None = None, duration: float = 0.0):
         self.success = success
         self.data = data
         self.error = error
         self.duration = duration
         self.timestamp = time.time()
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "success": self.success,
             "data": str(self.data)[:500] if self.data else None,
@@ -99,9 +103,9 @@ class ToolRegistry:
     """
 
     def __init__(self):
-        self._tools: Dict[str, ToolSpec] = {}
-        self._call_history: List[Dict] = []
-        self._call_counts: Dict[str, List[float]] = {}
+        self._tools: dict[str, ToolSpec] = {}
+        self._call_history: list[dict] = []
+        self._call_counts: dict[str, list[float]] = {}
         self.max_history = 1000
 
     def register(self, tool: ToolSpec):
@@ -110,7 +114,7 @@ class ToolRegistry:
             raise ValueError(f"الأداة '{tool.name}' مسجلة مسبقاً")
         self._tools[tool.name] = tool
 
-    def register_many(self, tools: List[ToolSpec]):
+    def register_many(self, tools: list[ToolSpec]):
         """تسجيل عدة أدوات"""
         for t in tools:
             self.register(t)
@@ -119,12 +123,12 @@ class ToolRegistry:
         """إلغاء Register tool"""
         self._tools.pop(name, None)
 
-    def get(self, name: str) -> Optional[ToolSpec]:
+    def get(self, name: str) -> ToolSpec | None:
         """الحصول على أداة بالاسم"""
         return self._tools.get(name)
 
-    def list(self, category: Optional[ToolCategory] = None,
-             enabled_only: bool = True) -> List[ToolSpec]:
+    def list(self, category: ToolCategory | None = None,
+             enabled_only: bool = True) -> list[ToolSpec]:
         """عرض الأدوات المتاحة (اختياري حسب التصنيف)"""
         tools = self._tools.values()
         if enabled_only:
@@ -133,7 +137,7 @@ class ToolRegistry:
             tools = [t for t in tools if t.category == category]
         return sorted(tools, key=lambda t: t.name)
 
-    def search(self, query: str) -> List[ToolSpec]:
+    def search(self, query: str) -> builtins.list[ToolSpec]:
         """بحث في الأدوات"""
         query = query.lower()
         results = []
@@ -176,7 +180,7 @@ class ToolRegistry:
             return ToolResult.fail(f"{type(e).__name__}: {e}")
 
     def _log_call(self, tool_name: str, success: bool,
-                  duration: float, args: Dict, error: Optional[str] = None):
+                  duration: float, args: dict, error: str | None = None):
         """تسجيل استدعاء"""
         self._call_history.append({
             "tool": tool_name,
@@ -189,7 +193,7 @@ class ToolRegistry:
         if len(self._call_history) > self.max_history:
             self._call_history = self._call_history[-self.max_history:]
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """إحصائيات استخدام الأدوات"""
         total = len(self._call_history)
         successful = sum(1 for c in self._call_history if c["success"])
@@ -237,7 +241,7 @@ def _tool_write_file(filepath: str, content: str, append: bool = False) -> str:
     return f"تم الحفظ: {filepath} ({len(content)} حرف)"
 
 
-def _tool_list_files(directory: str, pattern: str = "*") -> List[str]:
+def _tool_list_files(directory: str, pattern: str = "*") -> list[str]:
     """عرض محتويات مجلد"""
     path = Path(directory)
     if not path.exists():
@@ -254,7 +258,7 @@ def _tool_calculate(expression: str) -> float:
     return eval(expression, {"__builtins__": {}}, {})
 
 
-def _tool_json_parse(text: str) -> Dict:
+def _tool_json_parse(text: str) -> dict:
     """تحليل JSON"""
     return json.loads(text)
 
@@ -265,7 +269,7 @@ def _tool_json_dumps(data: Any, pretty: bool = True) -> str:
     return json.dumps(data, indent=indent, ensure_ascii=False)
 
 
-def _tool_count_lines(filepath: str) -> Dict:
+def _tool_count_lines(filepath: str) -> dict:
     """إحصاء أسطر ملف"""
     path = Path(filepath)
     if not path.exists():
@@ -295,7 +299,7 @@ def _tool_uuid() -> str:
     return uuid.uuid4().hex
 
 
-def _tool_timestamp() -> Dict:
+def _tool_timestamp() -> dict:
     """الحصول على الوقت الحالي"""
     now = time.time()
     return {

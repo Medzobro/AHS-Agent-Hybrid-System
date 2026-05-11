@@ -6,7 +6,9 @@ Interactive demo showing how OpenClaw + Hermes work together.
 Runs 3 different scenarios and shows the flow step by step.
 """
 
-import json, os, sys, time
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.dirname(__file__))
 from core.orchestrator_v2 import HybridFlow

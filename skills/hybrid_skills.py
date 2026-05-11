@@ -5,10 +5,8 @@ AHS - Hybrid Skills
 Skills that use OpenClaw + Hermes together to execute a single task.
 """
 
-import json
 import os
 import sys
-from typing import Dict, List, Optional, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from bridge.hermes_bridge import HermesBridge
@@ -22,7 +20,7 @@ class HybridSkills:
     def __init__(self):
         self.hermes = HermesBridge()
 
-    def research_and_summarize(self, topic: str) -> Dict:
+    def research_and_summarize(self, topic: str) -> dict:
         """مهارة: بحث + تلخيص (Hermes يبحث + OpenClaw يلخص)"""
         result = self.hermes.send_task(
             task=f"""
@@ -43,7 +41,7 @@ class HybridSkills:
 
         return result
 
-    def code_review(self, code: str) -> Dict:
+    def code_review(self, code: str) -> dict:
         """مهارة: مراجعة كود (Hermes يحلل + OpenClaw يقرر)"""
         result = self.hermes.send_task(
             task=f"""
@@ -67,7 +65,7 @@ class HybridSkills:
 
         return result
 
-    def plan_project(self, description: str) -> Dict:
+    def plan_project(self, description: str) -> dict:
         """مهارة: تخطيط مشروع (Hermes يفكر + OpenClaw ينفذ)"""
         result = self.hermes.send_task(
             task=f"""
@@ -89,7 +87,7 @@ class HybridSkills:
 
         return result
 
-    def learn_new_skill(self, skill_name: str) -> Dict:
+    def learn_new_skill(self, skill_name: str) -> dict:
         """مهارة: تعلم شيء جديد (Hermes يدرس + OpenClaw يطبق)"""
         result = self.hermes.send_task(
             task=f"""

@@ -14,7 +14,7 @@ AHS v1 — MCP Tool Registry
 import json
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
 
 from .memory_store import MemoryStore
 
@@ -29,9 +29,9 @@ class ToolRegistry:
     Each tool has a name, schema, and handler function.
     """
 
-    def __init__(self, memory_store: Optional[MemoryStore] = None):
+    def __init__(self, memory_store: MemoryStore | None = None):
         self.memory: MemoryStore = memory_store or MemoryStore()
-        self._tools: Dict[str, Dict] = {}
+        self._tools: dict[str, dict] = {}
         self.call_count = 0
         self.error_count = 0
         self._register_defaults()
@@ -185,7 +185,7 @@ class ToolRegistry:
         self,
         name: str,
         description: str,
-        schema: Dict,
+        schema: dict,
         handler: Callable,
     ):
         """Register a tool."""
@@ -197,7 +197,7 @@ class ToolRegistry:
         }
         logger.info(f"🔧 Tool registered: {name}")
 
-    def list_tools(self) -> List[Dict]:
+    def list_tools(self) -> list[dict]:
         """List all registered tools (without handlers)."""
         return [
             {
@@ -208,13 +208,13 @@ class ToolRegistry:
             for t in self._tools.values()
         ]
 
-    def get_tool(self, name: str) -> Optional[Dict]:
+    def get_tool(self, name: str) -> dict | None:
         """Get a tool by name."""
         return self._tools.get(name)
 
     # ─── Execution ────────────────────────────────────────────
 
-    def execute(self, name: str, params: Dict) -> Dict:
+    def execute(self, name: str, params: dict) -> dict:
         """
         Execute a tool by name with parameters.
 
@@ -262,7 +262,7 @@ class ToolRegistry:
 
     # ─── Web Search Handlers ──────────────────────────────────
 
-    def _handle_web_search(self, params: Dict) -> Dict:
+    def _handle_web_search(self, params: dict) -> dict:
         """Search the web via DuckDuckGo."""
         from .mcp_web_search import WebSearchMCP
 
@@ -272,7 +272,7 @@ class ToolRegistry:
             max_results=params.get("max_results", 5),
         )
 
-    def _handle_fetch_url(self, params: Dict) -> Dict:
+    def _handle_fetch_url(self, params: dict) -> dict:
         """Fetch a URL."""
         from .mcp_web_search import WebSearchMCP
 
@@ -284,7 +284,7 @@ class ToolRegistry:
 
     # ─── Memory Handlers ─────────────────────────────────────
 
-    def _handle_memory_get(self, params: Dict) -> Dict:
+    def _handle_memory_get(self, params: dict) -> dict:
         value = self.memory.get(
             namespace=params["namespace"],
             key=params["key"],
@@ -293,7 +293,7 @@ class ToolRegistry:
             return {"success": False, "error": "Key not found"}
         return {"success": True, "value": value}
 
-    def _handle_memory_set(self, params: Dict) -> Dict:
+    def _handle_memory_set(self, params: dict) -> dict:
         result = self.memory.set(
             namespace=params["namespace"],
             key=params["key"],
@@ -302,14 +302,14 @@ class ToolRegistry:
         )
         return {"success": True, "version": result["version"]}
 
-    def _handle_memory_search(self, params: Dict) -> Dict:
+    def _handle_memory_search(self, params: dict) -> dict:
         results = self.memory.search(
             query=params["query"],
             limit=params.get("limit", 20),
         )
         return {"success": True, "results": results, "count": len(results)}
 
-    def _handle_memory_list(self, params: Dict) -> Dict:
+    def _handle_memory_list(self, params: dict) -> dict:
         keys = self.memory.list_keys(
             namespace=params.get("namespace"),
             prefix=params.get("prefix"),
@@ -317,12 +317,12 @@ class ToolRegistry:
         )
         return {"success": True, "keys": keys, "count": len(keys)}
 
-    def _handle_memory_status(self, params: Dict) -> Dict:
+    def _handle_memory_status(self, params: dict) -> dict:
         return {"success": True, "status": self.memory.status()}
 
     # ─── Status ──────────────────────────────────────────────
 
-    def status(self) -> Dict:
+    def status(self) -> dict:
         return {
             "tool_count": len(self._tools),
             "tools": list(self._tools.keys()),

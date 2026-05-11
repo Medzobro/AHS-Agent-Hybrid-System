@@ -7,12 +7,18 @@ Skill Manager — install, enable, disable, search.
 Each skill is a .py file in the skills/ folder representing a specific capability.
 """
 
-import json, os, sys, time, uuid, importlib, inspect
-from typing import Dict, List, Optional, Any, Callable
+import builtins
+import importlib
+import inspect
+import json
+import os
+import sys
+import time
+import uuid
 from dataclasses import dataclass, field
-from pathlib import Path
 from enum import Enum
-import traceback
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -40,15 +46,15 @@ class Skill:
     module_path: str
     entry_point: str  # Main function name
     author: str = "AHS"
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     requires_hermes: bool = False
     enabled: bool = True
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     loaded: bool = False
     module: Any = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "description": self.description,
@@ -67,13 +73,13 @@ class SkillManager:
     Skill Manager — discovers, loads, runs skills.
     """
 
-    def __init__(self, skills_dir: Optional[str] = None):
+    def __init__(self, skills_dir: str | None = None):
         self.skills_dir = skills_dir or os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "skills"
         )
-        self._skills: Dict[str, Skill] = {}
-        self._cache: Dict[str, Any] = {}
-        self._execution_history: List[Dict] = []
+        self._skills: dict[str, Skill] = {}
+        self._cache: dict[str, Any] = {}
+        self._execution_history: list[dict] = []
         self.max_history = 500
         self.hermes_bridge = None
 
@@ -81,7 +87,7 @@ class SkillManager:
         """Attach Hermes bridge"""
         self.hermes_bridge = bridge
 
-    def discover(self) -> List[Skill]:
+    def discover(self) -> list[Skill]:
         """Discover skills in the skills/ folder"""
         skills_path = Path(self.skills_dir)
         if not skills_path.exists():
@@ -97,7 +103,7 @@ class SkillManager:
 
         return discovered
 
-    def _inspect_file(self, filepath: Path) -> Optional[Skill]:
+    def _inspect_file(self, filepath: Path) -> Skill | None:
         """Inspect a skill file and extract its information"""
         try:
             content = filepath.read_text(encoding="utf-8")
@@ -180,7 +186,7 @@ class SkillManager:
             self._skills[skill_name].loaded = False
             self._skills[skill_name].module = None
 
-    def execute(self, skill_name: str, **kwargs) -> Dict:
+    def execute(self, skill_name: str, **kwargs) -> dict:
         """Run a skill"""
         start = time.time()
         skill = self._skills.get(skill_name)
@@ -235,7 +241,7 @@ class SkillManager:
                 "elapsed": round(elapsed, 2),
             }
 
-    def _execute_via_hermes(self, skill_name: str, kwargs: Dict) -> str:
+    def _execute_via_hermes(self, skill_name: str, kwargs: dict) -> str:
         """Execute skill via Hermes"""
         if not self.hermes_bridge:
             return "Hermes bridge not available"
@@ -271,12 +277,12 @@ class SkillManager:
             return True
         return False
 
-    def get(self, skill_name: str) -> Optional[Skill]:
+    def get(self, skill_name: str) -> Skill | None:
         """Get a skill"""
         return self._skills.get(skill_name)
 
-    def list(self, category: Optional[SkillCategory] = None,
-             enabled_only: bool = True) -> List[Skill]:
+    def list(self, category: SkillCategory | None = None,
+             enabled_only: bool = True) -> list[Skill]:
         """List skills"""
         skills = self._skills.values()
         if enabled_only:
@@ -285,7 +291,7 @@ class SkillManager:
             skills = [s for s in skills if s.category == category]
         return sorted(skills, key=lambda s: s.name)
 
-    def search(self, query: str) -> List[Skill]:
+    def search(self, query: str) -> builtins.list[Skill]:
         """Search skills"""
         query = query.lower()
         results = []
@@ -296,7 +302,7 @@ class SkillManager:
                 results.append(skill)
         return results
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Skill statistics"""
         total = len(self._skills)
         loaded = sum(1 for s in self._skills.values() if s.loaded)
@@ -325,7 +331,7 @@ class SkillManager:
         }
 
     def _log_execution(self, skill: str, success: bool,
-                       elapsed: float, error: Optional[str] = None):
+                       elapsed: float, error: str | None = None):
         self._execution_history.append({
             "skill": skill,
             "success": success,

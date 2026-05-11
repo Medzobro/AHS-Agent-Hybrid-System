@@ -11,10 +11,13 @@ OpenClaw + Hermes يكتبون كود مع بعض.
   4. OpenClaw: يقدم ملخص
 """
 
-import json, os, sys, time
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from bridge.hermes_bridge import HermesBridge
-from typing import Dict, Optional
 
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "generated")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -31,8 +34,8 @@ class CodeAssistant:
     def __init__(self):
         self.hermes = HermesBridge()
 
-    def write_code(self, request: str, filename: Optional[str] = None,
-                   language: str = "python") -> Dict:
+    def write_code(self, request: str, filename: str | None = None,
+                   language: str = "python") -> dict:
         """
         اكتب كود: Hermes يكتب الكود ← OpenClaw يحفظه.
         """
@@ -115,7 +118,7 @@ class CodeAssistant:
             "elapsed": round(elapsed, 1),
         }
 
-    def review_code(self, code: str) -> Dict:
+    def review_code(self, code: str) -> dict:
         """
         راجع كود: Hermes يحلل ← OpenClaw يلخص.
         """
@@ -158,7 +161,7 @@ class CodeAssistant:
             "elapsed": round(elapsed, 1),
         }
 
-    def improve_code(self, code: str, instructions: str) -> Dict:
+    def improve_code(self, code: str, instructions: str) -> dict:
         """
         طور كود: Hermes يقترح تحسينات ← OpenClaw ينفذها.
         """

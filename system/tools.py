@@ -16,14 +16,12 @@ import sqlite3
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger("ahs-tools")
 
 # ─── Web Search ───────────────────────────────────────────────
 
-def web_search(query: str, count: int = 5) -> List[Dict[str, str]]:
+def web_search(query: str, count: int = 5) -> list[dict[str, str]]:
     """
     بحث في الويب عبر Brave Search API (أو fallback).
     """
@@ -35,7 +33,7 @@ def web_search(query: str, count: int = 5) -> List[Dict[str, str]]:
         return _ddg_fallback(query, count)
 
 
-def _brave_search(query: str, count: int, api_key: str) -> List[Dict[str, str]]:
+def _brave_search(query: str, count: int, api_key: str) -> list[dict[str, str]]:
     """Brave Search API"""
     try:
         params = urllib.parse.urlencode({"q": query, "count": count})
@@ -63,7 +61,7 @@ def _brave_search(query: str, count: int, api_key: str) -> List[Dict[str, str]]:
         return []
 
 
-def _ddg_fallback(query: str, count: int) -> List[Dict[str, str]]:
+def _ddg_fallback(query: str, count: int) -> list[dict[str, str]]:
     """DuckDuckGo HTML fallback (بدون API key)"""
     try:
         params = urllib.parse.urlencode({"q": query})
@@ -136,7 +134,7 @@ class MemoryStore:
             """)
             conn.commit()
     
-    def set(self, key: str, value: str, ttl_seconds: Optional[int] = None) -> Dict:
+    def set(self, key: str, value: str, ttl_seconds: int | None = None) -> dict:
         """تخزين قيمة مع versioning"""
         now = time.time()
         expires = now + ttl_seconds if ttl_seconds else None
@@ -158,7 +156,7 @@ class MemoryStore:
         
         return {"key": key, "version": new_version, "created_at": now}
     
-    def get(self, key: str, version: Optional[int] = None) -> Optional[str]:
+    def get(self, key: str, version: int | None = None) -> str | None:
         """استرجاع قيمة"""
         with sqlite3.connect(self.db_path) as conn:
             if version:
@@ -179,7 +177,7 @@ class MemoryStore:
                 return value
         return None
     
-    def search(self, query: str, limit: int = 10) -> List[Dict]:
+    def search(self, query: str, limit: int = 10) -> list[dict]:
         """Full-text search في الذاكرة"""
         with sqlite3.connect(self.db_path) as conn:
             rows = conn.execute("""
@@ -197,7 +195,7 @@ class MemoryStore:
                 for r in rows
             ]
     
-    def list_keys(self, limit: int = 100) -> List[str]:
+    def list_keys(self, limit: int = 100) -> list[str]:
         """قائمة المفاتيح المخزنة"""
         with sqlite3.connect(self.db_path) as conn:
             rows = conn.execute("""
@@ -215,7 +213,7 @@ class MemoryStore:
             conn.commit()
         return True
     
-    def stats(self) -> Dict:
+    def stats(self) -> dict:
         """إحصائيات الذاكرة"""
         with sqlite3.connect(self.db_path) as conn:
             total = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
@@ -239,12 +237,12 @@ class MemoryStore:
 
 # ─── Tool Registration ────────────────────────────────────────
 
-def register_tools(mcp_handlers: Dict):
+def register_tools(mcp_handlers: dict):
     """تسجيل كل الأدوات في الـ MCP handlers"""
     memory = MemoryStore()
     
     @mcp_handlers.register("web_search")
-    def handle_web_search(params: Dict) -> Dict:
+    def handle_web_search(params: dict) -> dict:
         query = params.get("query", "")
         count = params.get("count", 5)
         results = web_search(query, count)
@@ -252,23 +250,23 @@ def register_tools(mcp_handlers: Dict):
         return {"results": results}
     
     @mcp_handlers.register("memory_set")
-    def handle_memory_set(params: Dict) -> Dict:
+    def handle_memory_set(params: dict) -> dict:
         result = memory.set(params["key"], params["value"])
         logger.info(f"💾 Memory set: {params['key']} v{result['version']}")
         return result
     
     @mcp_handlers.register("memory_get")
-    def handle_memory_get(params: Dict) -> Dict:
+    def handle_memory_get(params: dict) -> dict:
         value = memory.get(params["key"])
         return {"key": params["key"], "value": value}
     
     @mcp_handlers.register("memory_search")
-    def handle_memory_search(params: Dict) -> Dict:
+    def handle_memory_search(params: dict) -> dict:
         results = memory.search(params.get("query", ""))
         return {"results": results}
     
     @mcp_handlers.register("memory_stats")
-    def handle_memory_stats(params: Dict) -> Dict:
+    def handle_memory_stats(params: dict) -> dict:
         return memory.stats()
 
 

@@ -13,16 +13,20 @@ Usage:
   python3 main.py --status
 """
 
-import json, os, sys, time, argparse
+import argparse
+import json
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from core.agent_loop import HybridAgent
 from core.orchestrator_v2 import HybridFlow
+from demo import demo_scenario
+from skills.code_assistant import CodeAssistant
 from skills.hybrid_skills import HybridSkills
 from skills.synthesizer import ResponseSynthesizer
-from skills.code_assistant import CodeAssistant
-from demo import demo_scenario
 
 GREEN = "\033[92m"
 CYAN = "\033[96m"

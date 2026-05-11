@@ -3,7 +3,7 @@
  * ===================================
  * HTTP + WebSocket gateway for the AHS TypeScript Core.
  * Uses Hermes' HybridOrchestrator for intelligent routing.
- * 
+ *
  * Endpoints:
  *   GET  /health     → System health status
  *   GET  /status     → Full AHS status
@@ -11,10 +11,10 @@
  *   WS   /ws         → WebSocket for streaming
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
-import * as http from 'http';
-import * as os from 'os';
-import { AHEngine } from './orchestrator/index.js';
+import * as http from "http";
+import * as os from "os";
+import { type WebSocket, WebSocketServer } from "ws";
+import type { AHEngine } from "./orchestrator/index.js";
 
 export interface GatewayConfig {
   port: number;
@@ -35,7 +35,7 @@ export class GatewayServer {
   private wss: WebSocketServer | null = null;
   private engine: AHEngine;
   private connections: Set<WebSocket> = new Set();
-  private tasksProcessed: number = 0;
+  private tasksProcessed = 0;
   private startTime: number = Date.now();
 
   constructor(config: GatewayConfig, engine: AHEngine) {
@@ -46,18 +46,18 @@ export class GatewayServer {
   async start(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => this.handleRequest(req, res));
-      
+
       // WebSocket server
-      this.wss = new WebSocketServer({ server: this.server, path: '/ws' });
-      this.wss.on('connection', (ws: WebSocket) => {
+      this.wss = new WebSocketServer({ server: this.server, path: "/ws" });
+      this.wss.on("connection", (ws: WebSocket) => {
         this.connections.add(ws);
         console.log(`  🔗 WebSocket client connected (${this.connections.size} total)`);
 
-        ws.on('message', async (data: Buffer | string) => {
+        ws.on("message", async (data: Buffer | string) => {
           this.tasksProcessed++;
           try {
             const msg = JSON.parse(data.toString());
-            const task = msg.task || msg.message || '';
+            const task = msg.task || msg.message || "";
             const result = await this.engine.process(task);
             ws.send(JSON.stringify(result));
           } catch (err: unknown) {
@@ -66,7 +66,7 @@ export class GatewayServer {
           }
         });
 
-        ws.on('close', () => {
+        ws.on("close", () => {
           this.connections.delete(ws);
         });
       });
@@ -75,43 +75,45 @@ export class GatewayServer {
         resolve();
       });
 
-      this.server.on('error', reject);
+      this.server.on("error", reject);
     });
   }
 
   private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
-    const url = new URL(req.url || '/', `http://${req.headers.host}`);
-    
-    // CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    const url = new URL(req.url || "/", `http://${req.headers.host}`);
 
-    if (req.method === 'OPTIONS') {
+    // CORS
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
       res.writeHead(204);
       res.end();
       return;
     }
 
     switch (url.pathname) {
-      case '/health':
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', version: '0.4.0' }));
+      case "/health":
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "ok", version: "0.4.0" }));
         break;
 
-      case '/status':
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          ...this.getStatus(),
-          platform: os.platform(),
-          hostname: os.hostname(),
-        }));
+      case "/status":
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            ...this.getStatus(),
+            platform: os.platform(),
+            hostname: os.hostname(),
+          }),
+        );
         break;
 
-      case '/task':
-        if (req.method !== 'POST') {
+      case "/task":
+        if (req.method !== "POST") {
           res.writeHead(405);
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
+          res.end(JSON.stringify({ error: "Method not allowed" }));
           return;
         }
         await this.handleTaskRequest(req, res);
@@ -119,14 +121,14 @@ export class GatewayServer {
 
       default:
         res.writeHead(404);
-        res.end(JSON.stringify({ error: 'Not found', path: url.pathname }));
+        res.end(JSON.stringify({ error: "Not found", path: url.pathname }));
     }
   }
 
   private handleTaskRequest(req: http.IncomingMessage, res: http.ServerResponse): void {
-    let body = '';
-    req.on('data', (chunk: string) => (body += chunk));
-    req.on('end', async () => {
+    let body = "";
+    req.on("data", (chunk: string) => (body += chunk));
+    req.on("end", async () => {
       this.tasksProcessed++;
       try {
         const { task, mode } = JSON.parse(body);
@@ -136,13 +138,15 @@ export class GatewayServer {
           return;
         }
 
-        const result = await this.engine.process(task, mode || 'auto');
+        const result = await this.engine.process(task, mode || "auto");
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          ...result, 
-          gateway: 'http'
-        }));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            ...result,
+            gateway: "http",
+          }),
+        );
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         res.writeHead(500);
@@ -177,7 +181,7 @@ export class GatewayServer {
       port: this.config.port,
       connections: this.connections.size,
       tasksProcessed: this.tasksProcessed,
-      version: '0.4.0',
+      version: "0.4.0",
       uptime: Math.floor((Date.now() - this.startTime) / 1000),
     };
   }

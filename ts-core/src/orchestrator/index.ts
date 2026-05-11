@@ -5,8 +5,8 @@
 // AI-native task classifier + MCP-based bridge.
 // No keyword matching. No subprocess. Pure protocol.
 
-import debug from "debug";
 import * as http from "http";
+import debug from "debug";
 import type {
   AgentId,
   Complexity,
@@ -33,25 +33,41 @@ export class TaskClassifier {
 
     // Depth signals
     const researchSignals = [
-      "بحث", "ابحث", "research", "analyze", "تحليل", "حلل",
-      "study", "learn", "deep", "explain", "شرح", "find",
+      "بحث",
+      "ابحث",
+      "research",
+      "analyze",
+      "تحليل",
+      "حلل",
+      "study",
+      "learn",
+      "deep",
+      "explain",
+      "شرح",
+      "find",
     ];
 
     const codeSignals = [
-      "كود", "code", "برمجة", "برمج", "python", "typescript",
-      "function", "class", "implement", "نفذ", "write",
+      "كود",
+      "code",
+      "برمجة",
+      "برمج",
+      "python",
+      "typescript",
+      "function",
+      "class",
+      "implement",
+      "نفذ",
+      "write",
     ];
 
-    const fastSignals = [
-      "قل", "قول", "hi", "hello", "مرحبا", "جاهز", "تمام",
-      "yes", "no", "نعم", "لا",
-    ];
+    const fastSignals = ["قل", "قول", "hi", "hello", "مرحبا", "جاهز", "تمام", "yes", "no", "نعم", "لا"];
 
     // Count signals per category
     const score = {
-      research: researchSignals.filter(s => t.includes(s)).length,
-      code: codeSignals.filter(s => t.includes(s)).length,
-      fast: fastSignals.filter(s => t.includes(s)).length,
+      research: researchSignals.filter((s) => t.includes(s)).length,
+      code: codeSignals.filter((s) => t.includes(s)).length,
+      fast: fastSignals.filter((s) => t.includes(s)).length,
     };
 
     // Determine agent
@@ -66,7 +82,7 @@ export class TaskClassifier {
       complexity = "simple";
       confidence = 0.85;
       reason = "greeting or simple request classified as quick response";
-    } else if (score.code > score.research || words > 30 && score.code > 0) {
+    } else if (score.code > score.research || (words > 30 && score.code > 0)) {
       agent = "hermes";
       complexity = words > 50 ? "complex" : "medium";
       confidence = 0.75;
@@ -75,19 +91,19 @@ export class TaskClassifier {
     } else if (score.research > 0 || words > 40) {
       agent = "hermes";
       complexity = words > 80 ? "research" : "complex";
-      confidence = 0.80;
+      confidence = 0.8;
       reason = "research or long-form task classified for deep think";
       requiredSkills = ["research", "arxiv", "llm-wiki"];
     } else if (words > 50) {
       agent = "hermes";
       complexity = "complex";
-      confidence = 0.70;
+      confidence = 0.7;
       reason = "long task needs detailed analysis";
     } else {
       // Hybrid default — both agents
       agent = "hermes";
       complexity = "medium";
-      confidence = 0.60;
+      confidence = 0.6;
       reason = "default classification — using Hermes for quality";
     }
 
@@ -157,48 +173,31 @@ export class PlanBuilder {
   }
 
   private buildSimple(task: string): PlanStep[] {
-    return [
-      this.step("respond", "openclaw", "Direct response to user", []),
-    ];
+    return [this.step("respond", "openclaw", "Direct response to user", [])];
   }
 
   private buildMedium(task: string, classification: TaskClassification): PlanStep[] {
     return [
       this.step("analyze", "openclaw", "Understand the request", []),
-      this.step(
-        "deep_think",
-        classification.agent,
-        "Think deeply and generate response",
-        ["step_1"],
-      ),
+      this.step("deep_think", classification.agent, "Think deeply and generate response", ["step_1"]),
       this.step("synthesize", "openclaw", "Format and deliver response", ["step_2"]),
     ];
   }
 
   private buildComplex(task: string, classification: TaskClassification): PlanStep[] {
-    const steps: PlanStep[] = [
-      this.step("understand", "openclaw", "Parse and understand complex task", []),
-    ];
+    const steps: PlanStep[] = [this.step("understand", "openclaw", "Parse and understand complex task", [])];
 
     // Research + Analysis
-    steps.push(
-      this.step("research", "hermes", "Research and gather information", ["step_1"]),
-    );
+    steps.push(this.step("research", "hermes", "Research and gather information", ["step_1"]));
 
     // Deep reasoning
-    steps.push(
-      this.step("deep_think", "hermes", "Deep analysis with reasoning", ["step_2"]),
-    );
+    steps.push(this.step("deep_think", "hermes", "Deep analysis with reasoning", ["step_2"]));
 
     // OpenClaw execution
-    steps.push(
-      this.step("execute", "openclaw", "Execute any actionable steps", ["step_3"]),
-    );
+    steps.push(this.step("execute", "openclaw", "Execute any actionable steps", ["step_3"]));
 
     // Final response
-    steps.push(
-      this.step("respond", "openclaw", "Build final response", ["step_4"]),
-    );
+    steps.push(this.step("respond", "openclaw", "Build final response", ["step_4"]));
 
     return steps;
   }
@@ -250,7 +249,7 @@ export class HybridOrchestrator {
     let stepIndex = 0;
     while (completedSteps.size < plan.steps.length && stepIndex < 50) {
       const ready = plan.steps.filter(
-        s => !completedSteps.has(s.id) && s.dependencies.every(d => completedSteps.has(d)),
+        (s) => !completedSteps.has(s.id) && s.dependencies.every((d) => completedSteps.has(d)),
       );
 
       if (ready.length === 0) {
@@ -289,14 +288,15 @@ export class HybridOrchestrator {
     // 4. Build final response
     const hermesOutputs = [...stepResults.entries()]
       .filter(([id]) => {
-        const step = plan.steps.find(s => s.id === id);
+        const step = plan.steps.find((s) => s.id === id);
         return step?.agent === "hermes";
       })
       .map(([_, result]) => result);
 
-    const response = hermesOutputs.length > 0
-      ? `🤝 **AHS Hybrid Agent**\n\n${hermesOutputs[hermesOutputs.length - 1]}`
-      : "🤝 **AHS** — Task processed";
+    const response =
+      hermesOutputs.length > 0
+        ? `🤝 **AHS Hybrid Agent**\n\n${hermesOutputs[hermesOutputs.length - 1]}`
+        : "🤝 **AHS** — Task processed";
 
     const elapsed = performance.now() - globalStart;
 
@@ -311,9 +311,8 @@ export class HybridOrchestrator {
   }
 
   private async callMCP(task: string): Promise<string> {
-    const port = process.env.AHS_MCP_PORT 
-      ? parseInt(process.env.AHS_MCP_PORT) : 18900;
-    
+    const port = process.env.AHS_MCP_PORT ? Number.parseInt(process.env.AHS_MCP_PORT) : 18900;
+
     return new Promise((resolve) => {
       const payload = JSON.stringify({ task, mode: "hybrid" });
       const req = http.request(
@@ -339,7 +338,7 @@ export class HybridOrchestrator {
               resolve(body);
             }
           });
-        }
+        },
       );
       req.on("error", (err: Error) => resolve(`Error calling MCP: ${err.message}`));
       req.write(payload);
@@ -388,26 +387,28 @@ export class AHEngine {
    * @param task - The task to process
    * @param mode - 'auto' | 'quick' | 'hybrid' | 'deep' (from gateway)
    */
-  async process(task: string, mode: string = 'auto'): Promise<OrchestrationResult> {
-    if (mode === 'quick') {
+  async process(task: string, mode = "auto"): Promise<OrchestrationResult> {
+    if (mode === "quick") {
       return {
         task,
         success: true,
-        response: '✅ تم',
+        response: "✅ تم",
         steps: 1,
         elapsedMs: 0,
-        log: [{
-          timestamp: Date.now(),
-          agent: 'openclaw' as const,
-          action: 'respond',
-          status: 'completed' as const,
-          duration: 0,
-        }],
+        log: [
+          {
+            timestamp: Date.now(),
+            agent: "openclaw" as const,
+            action: "respond",
+            status: "completed" as const,
+            duration: 0,
+          },
+        ],
       };
     }
-    
+
     // For hybrid/deep — delegate to MCP HTTP
-    if (mode === 'hybrid' || mode === 'deep' || mode === 'auto') {
+    if (mode === "hybrid" || mode === "deep" || mode === "auto") {
       try {
         const response = await this.orchestrator.run(task);
         return response;
@@ -422,7 +423,7 @@ export class AHEngine {
         };
       }
     }
-    
+
     return this.orchestrator.run(task);
   }
 }

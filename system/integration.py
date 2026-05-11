@@ -11,25 +11,29 @@ Provides:
   - Single entry point
 """
 
-import json, os, sys, time, uuid, threading, logging
-from typing import Dict, List, Optional, Any, Callable
+import logging
+import os
+import sys
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from core.orchestrator import HybridOrchestrator, TaskType
-from core.agent_loop import HybridAgent
+import system.self_learn as sl
 from bridge.hermes_bridge import HermesBridge
+from core.agent_loop import HybridAgent
+from core.orchestrator import HybridOrchestrator
+from skills.code_assistant import CodeAssistant
 from skills.hybrid_skills import HybridSkills
 from skills.synthesizer import ResponseSynthesizer
-from skills.code_assistant import CodeAssistant
-from system.multi_agent import MultiAgentOrchestrator, AgentWorker, AgentRole
-from system.tool_registry import ToolRegistry, create_default_tools, dump_tools_registry
-from system.skill_manager import SkillManager, SkillCategory
 from system.config_manager import ConfigManager
 from system.doctor import Doctor
-import system.self_learn as sl
+from system.multi_agent import MultiAgentOrchestrator
+from system.skill_manager import SkillManager
+from system.tool_registry import ToolRegistry, create_default_tools
 
 logger = logging.getLogger("ahs.integration")
 
@@ -70,23 +74,23 @@ class AHSIntegration:
 
     def __init__(self):
         self.config = ConfigManager()
-        self.orchestrator: Optional[HermesBridge] = None
-        self.agent: Optional[HermesBridge] = None
-        self.hermes: Optional[HermesBridge] = None
-        self.tools: Optional[ToolRegistry] = None
-        self.skills: Optional[SkillManager] = None
-        self.multi_agent: Optional[MultiAgentOrchestrator] = None
-        self.doctor: Optional[Doctor] = None
-        self.synth: Optional[ResponseSynthesizer] = None
-        self.code: Optional[CodeAssistant] = None
-        self.hybrid_skills: Optional[HybridSkills] = None
+        self.orchestrator: HermesBridge | None = None
+        self.agent: HermesBridge | None = None
+        self.hermes: HermesBridge | None = None
+        self.tools: ToolRegistry | None = None
+        self.skills: SkillManager | None = None
+        self.multi_agent: MultiAgentOrchestrator | None = None
+        self.doctor: Doctor | None = None
+        self.synth: ResponseSynthesizer | None = None
+        self.code: CodeAssistant | None = None
+        self.hybrid_skills: HybridSkills | None = None
 
         self.status = SystemStatus.STOPPED
         self.stats = IntegrationStats()
-        self._components_initialized: List[str] = []
-        self._event_handlers: Dict[str, List[Callable]] = {}
+        self._components_initialized: list[str] = []
+        self._event_handlers: dict[str, list[Callable]] = {}
 
-    def initialize(self) -> Dict:
+    def initialize(self) -> dict:
         """Initialize all system components"""
         self.status = SystemStatus.STARTING
         start = time.time()
@@ -187,7 +191,7 @@ class AHSIntegration:
             "elapsed": round(elapsed, 2),
         }
 
-    def process(self, task: str, mode: str = "auto", **kwargs) -> Dict:
+    def process(self, task: str, mode: str = "auto", **kwargs) -> dict:
         """Process task using best mode"""
         self.stats.tasks_processed += 1
 
@@ -228,11 +232,11 @@ class AHSIntegration:
 
         return "hybrid"
 
-    def _process_quick(self, task: str) -> Dict:
+    def _process_quick(self, task: str) -> dict:
         """Quick processing (OpenClaw only)"""
         return {"response": "✅ تم", "elapsed": 0.01}
 
-    def _process_hybrid(self, task: str) -> Dict:
+    def _process_hybrid(self, task: str) -> dict:
         """Hybrid processing (OpenClaw + Hermes)"""
         if not self.synth:
             return {"response": "⚠️ الوضع الهجين غير متاح"}
@@ -240,7 +244,7 @@ class AHSIntegration:
         self.stats.hermes_calls += 1
         return {"response": result["final"], "elapsed": result["elapsed"]}
 
-    def _process_code(self, task: str) -> Dict:
+    def _process_code(self, task: str) -> dict:
         """Code processing"""
         if not self.code:
             return {"response": "⚠️ مساعد البرمجة غير متاح"}
@@ -254,7 +258,7 @@ class AHSIntegration:
             }
         return {"response": f"❌ {result.get('error')}"}
 
-    def _process_deep(self, task: str) -> Dict:
+    def _process_deep(self, task: str) -> dict:
         """Deep processing (Hermes)"""
         if not self.hermes:
             return {"response": "⚠️ Hermes غير متاح"}
@@ -264,7 +268,7 @@ class AHSIntegration:
         content = resp.get("content", "") or ""
         return {"response": content[:600], "elapsed": result.get("elapsed", 0)}
 
-    def _process_flow(self, task: str) -> Dict:
+    def _process_flow(self, task: str) -> dict:
         """Multi-step flow processing"""
         if not self.multi_agent:
             return {"response": "⚠️ النظام متعدد الوكلاء غير متاح"}
@@ -272,13 +276,13 @@ class AHSIntegration:
         self.stats.hermes_calls += result.get("completed", 0)
         return {"response": f"✅ {result['completed']} مهام منجزة", "details": result}
 
-    def health_check(self) -> Dict:
+    def health_check(self) -> dict:
         """Full health check"""
         if not self.doctor:
             self.doctor = Doctor()
         return self.doctor.diagnose()
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         """Full system status"""
         config_summary = self.config.summary() if self.config else {}
 
@@ -327,19 +331,19 @@ class AHSIntegration:
             self._event_handlers[event] = []
         self._event_handlers[event].append(handler)
 
-    def learn_report(self) -> Dict:
+    def learn_report(self) -> dict:
         """تقرير التعلم الذاتي"""
         if not hasattr(self, 'learner'):
             return {"status": "not_initialized"}
         return self.learner.report()
 
-    def suggest_improvements(self) -> List:
+    def suggest_improvements(self) -> list:
         """اقتراح تحسينات"""
         if not hasattr(self, 'learner'):
             return []
         return self.learner.suggest_improvements()
 
-    def auto_fix(self) -> Dict[str, bool]:
+    def auto_fix(self) -> dict[str, bool]:
         """محاولة إصلاح كل الملفات تلقائياً"""
         if not hasattr(self, 'learner'):
             return {}

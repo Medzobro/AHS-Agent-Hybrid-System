@@ -15,13 +15,10 @@ AHS - Web Search Tool
   - BeautifulSoup4 (اختياري — يعمل بدونه)
 """
 
-import json
 import logging
-import os
 import re
 import time
-from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from typing import Any
 
 # تثبيت beautifulsoup4 إذا لم يكن موجوداً
 try:
@@ -56,9 +53,9 @@ class LRUCache:
     def __init__(self, max_size: int = CACHE_SIZE, ttl: int = CACHE_TTL):
         self.max_size = max_size
         self.ttl = ttl
-        self._cache: Dict[str, tuple] = {}  # key → (timestamp, value)
+        self._cache: dict[str, tuple] = {}  # key → (timestamp, value)
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         if key not in self._cache:
             return None
         ts, value = self._cache[key]
@@ -102,7 +99,7 @@ class WebSearchTool:
         self.call_count = 0
         self.error_count = 0
 
-    def search(self, query: str, max_results: int = 5, region: str = "wt-wt") -> Dict:
+    def search(self, query: str, max_results: int = 5, region: str = "wt-wt") -> dict:
         """
         بحث في الويب عبر DuckDuckGo.
 
@@ -150,7 +147,7 @@ class WebSearchTool:
         logger.info(f"✅ Search complete: {len(results)} results in {elapsed}s")
         return response
 
-    def _search_duckduckgo_api(self, query: str) -> List[Dict]:
+    def _search_duckduckgo_api(self, query: str) -> list[dict]:
         """
         DuckDuckGo Instant Answer API.
         يعطي إجابات فورية ونتائج محدودة.
@@ -216,7 +213,7 @@ class WebSearchTool:
             logger.warning(f"DuckDuckGo API error: {e}")
             return []
 
-    def _search_duckduckgo_html(self, query: str) -> List[Dict]:
+    def _search_duckduckgo_html(self, query: str) -> list[dict]:
         """
         DuckDuckGo HTML search (fallback).
         أفضل للحصول على نتائج كاملة.
@@ -281,7 +278,7 @@ class WebSearchTool:
             logger.warning(f"DuckDuckGo HTML error: {e}")
             return []
 
-    def fetch_url(self, url: str, timeout: int = 15) -> Dict:
+    def fetch_url(self, url: str, timeout: int = 15) -> dict:
         """
         جلب محتوى صفحة URL.
 
@@ -373,7 +370,7 @@ class WebSearchTool:
             self.error_count += 1
             return {"success": False, "url": url, "error": str(e)[:200]}
 
-    def google_search(self, query: str, max_results: int = 5) -> Dict:
+    def google_search(self, query: str, max_results: int = 5) -> dict:
         """
         بحث عبر Google (بدون API — يستخدم scraping).
         ملاحظة: قد لا يعمل دائماً بدون حلول anti-bot.
@@ -446,7 +443,7 @@ class WebSearchTool:
             self.error_count += 1
             return {"success": False, "error": str(e)[:200]}
 
-    def multi_search(self, query: str, max_results: int = 5) -> Dict:
+    def multi_search(self, query: str, max_results: int = 5) -> dict:
         """
         بحث متعدد المصادر — يجمع DuckDuckGo + Google + Fetch.
         """
@@ -477,7 +474,7 @@ class WebSearchTool:
             "sources": ["duckduckgo", "google"],
         }
 
-    def status(self) -> Dict:
+    def status(self) -> dict:
         """حالة الأداة"""
         return {
             "name": "web_search_tool",
@@ -501,7 +498,7 @@ def get_web_search() -> WebSearchTool:
     return _web_search_instance
 
 
-def web_search(query: str, max_results: int = 5) -> Dict:
+def web_search(query: str, max_results: int = 5) -> dict:
     """
     استدعاء بسيط للبحث — ينفع يستخدم من أي مكان.
 
@@ -515,7 +512,7 @@ def web_search(query: str, max_results: int = 5) -> Dict:
     return get_web_search().search(query, max_results=max_results)
 
 
-def fetch_url(url: str) -> Dict:
+def fetch_url(url: str) -> dict:
     """
     جلب محتوى URL.
 

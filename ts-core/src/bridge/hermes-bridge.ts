@@ -8,7 +8,7 @@
 
 import { randomUUID } from "node:crypto";
 import debug from "debug";
-import type { BridgeMessage, BridgeResponse, MCPTool, MCPServerConfig, TransportType } from "../types/index.js";
+import type { BridgeMessage, BridgeResponse, MCPServerConfig, MCPTool, TransportType } from "../types/index.js";
 
 const log = debug("ahs:bridge");
 
@@ -28,11 +28,14 @@ export class MCPError extends Error {
 export class MCPSession {
   private config: MCPServerConfig;
   private active = false;
-  private requestMap = new Map<string, {
-    resolve: (value: unknown) => void;
-    reject: (err: Error) => void;
-    timer: NodeJS.Timeout;
-  }>();
+  private requestMap = new Map<
+    string,
+    {
+      resolve: (value: unknown) => void;
+      reject: (err: Error) => void;
+      timer: NodeJS.Timeout;
+    }
+  >();
 
   constructor(config: MCPServerConfig) {
     this.config = config;
@@ -154,12 +157,16 @@ export class HermesBridge {
     const start = performance.now();
 
     try {
-      const result = await this.session.call("hermes/invoke", {
-        task: options.task,
-        skills: options.skills ?? [],
-        context: options.context ?? {},
-        stream: options.streaming ?? false,
-      }, options.timeout ?? 60_000);
+      const result = await this.session.call(
+        "hermes/invoke",
+        {
+          task: options.task,
+          skills: options.skills ?? [],
+          context: options.context ?? {},
+          stream: options.streaming ?? false,
+        },
+        options.timeout ?? 60_000,
+      );
 
       const elapsed = performance.now() - start;
 

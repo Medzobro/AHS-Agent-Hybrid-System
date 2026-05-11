@@ -2,22 +2,22 @@
  * AHS — Agent Hybrid System v0.4
  * =================================
  * TypeScript Core (OpenClaw) + Hermes (Python MCP)
- * 
+ *
  * Architecture:
  *   Gateway (HTTP/WS) ←→ AHEngine (Orchestrator) ←→ Hermes Bridge (MCP)
- * 
+ *
  * كل جزء يشتغل مستقل ويتواصل عبر بروتوكول MCP.
- * 
+ *
  * Author: Aziz + Hermes
  */
 
-import { GatewayServer } from './gateway.js';
-import { HermesBridge } from './bridge/hermes-bridge.js';
-import { AHEngine } from './orchestrator/index.js';
-import type { MCPServerConfig } from './types/index.js';
+import { HermesBridge } from "./bridge/hermes-bridge.js";
+import { GatewayServer } from "./gateway.js";
+import { AHEngine } from "./orchestrator/index.js";
+import type { MCPServerConfig } from "./types/index.js";
 
-const AHS_VERSION = '0.4.0';
-const AHS_CODENAME = 'ترادف';
+const AHS_VERSION = "0.4.0";
+const AHS_CODENAME = "ترادف";
 
 interface AHSConfig {
   name: string;
@@ -33,20 +33,20 @@ class AHSCore {
   private gateway!: GatewayServer;
   private hermesBridge!: HermesBridge;
   private engine!: AHEngine;
-  private started: boolean = false;
+  private started = false;
 
   constructor() {
     this.config = {
-      name: 'AHS-Agent-Hybrid-System',
+      name: "AHS-Agent-Hybrid-System",
       version: AHS_VERSION,
       codename: AHS_CODENAME,
-      gateway: { 
-        port: parseInt(process.env.AHS_GATEWAY_PORT || '18791') 
+      gateway: {
+        port: Number.parseInt(process.env.AHS_GATEWAY_PORT || "18791"),
       },
       hermes: {
-        name: 'hermes',
-        transport: 'http',
-        endpoint: `http://${process.env.AHS_HERMES_HOST || 'localhost'}:${process.env.AHS_MCP_PORT || process.env.AHS_HERMES_PORT || '18900'}`,
+        name: "hermes",
+        transport: "http",
+        endpoint: `http://${process.env.AHS_HERMES_HOST || "localhost"}:${process.env.AHS_MCP_PORT || process.env.AHS_HERMES_PORT || "18900"}`,
         tools: [],
       },
       workingDir: process.env.AHS_WORKING_DIR || process.cwd(),
@@ -58,20 +58,20 @@ class AHSCore {
   async start(): Promise<void> {
     if (this.started) return;
 
-    console.log(`\n${'='.repeat(52)}`);
+    console.log(`\n${"=".repeat(52)}`);
     console.log(`  🤝 AHS v${AHS_VERSION} — "${AHS_CODENAME}"`);
     console.log(`  OpenClaw (TS) ⟷ Hermes (Python) عبر MCP`);
-    console.log(`${'='.repeat(52)}\n`);
+    console.log(`${"=".repeat(52)}\n`);
 
     try {
       // 1. Hermes Bridge
       this.hermesBridge = new HermesBridge(this.config.hermes);
       await this.hermesBridge.connect();
-      console.log(`  🔌 Hermes Bridge: ${'✅ Connected'}`);
+      console.log(`  🔌 Hermes Bridge: ${"✅ Connected"}`);
 
       // 2. AHEngine (Orchestrator)
       this.engine = new AHEngine();
-      
+
       // Inject hermes bridge into engine context
       // (For now engine runs in simulation — real MCP calls come in v0.5)
       console.log(`  🧠 AHEngine: ✅ (classify → plan → execute → respond)`);
@@ -88,9 +88,8 @@ class AHSCore {
       console.log(`     GET  /status     → Full status`);
       console.log(`     POST /task       → Send a task (JSON {"task":"..."})`);
       console.log(`     WS   /ws         → WebSocket`);
-
     } catch (error) {
-      console.error('  ❌ Failed to start AHS Core:', error);
+      console.error("  ❌ Failed to start AHS Core:", error);
       throw error;
     }
   }
@@ -116,12 +115,18 @@ class AHSCore {
 // ——— CLI ———
 const core = new AHSCore();
 
-process.on('SIGINT', async () => { await core.stop(); process.exit(0); });
-process.on('SIGTERM', async () => { await core.stop(); process.exit(0); });
+process.on("SIGINT", async () => {
+  await core.stop();
+  process.exit(0);
+});
+process.on("SIGTERM", async () => {
+  await core.stop();
+  process.exit(0);
+});
 
 core.start().catch((err) => {
-  console.error('Fatal:', err);
+  console.error("Fatal:", err);
   process.exit(1);
 });
 
-export { AHSCore, AHSConfig };
+export { AHSCore, type AHSConfig };

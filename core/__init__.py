@@ -20,8 +20,8 @@ Usage:
   task_type, plan = o.classify_task("Write Python code")
 """
 
-from .orchestrator import HybridOrchestrator, TaskType
 from .agent_loop import HybridAgent
+from .orchestrator import HybridOrchestrator, TaskType
 
 __all__ = [
     "HybridOrchestrator",

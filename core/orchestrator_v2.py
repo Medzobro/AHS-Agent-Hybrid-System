@@ -9,10 +9,13 @@ a complete flow:
   OpenClaw → understands → plans → Hermes → thinks → OpenClaw → executes → responds
 """
 
-import json, os, sys, time
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from bridge.hermes_bridge import HermesBridge
-from typing import Dict, List, Optional
 
 
 class HybridFlow:
@@ -23,9 +26,9 @@ class HybridFlow:
 
     def __init__(self):
         self.hermes = HermesBridge()
-        self.steps_log: List[Dict] = []
+        self.steps_log: list[dict] = []
 
-    def run(self, task: str) -> Dict:
+    def run(self, task: str) -> dict:
         """Run the complete hybrid flow"""
         self.steps_log = []
         start = time.time()
@@ -74,7 +77,7 @@ class HybridFlow:
             "log": self.steps_log,
         }
 
-    def _plan(self, flow_type: str, task: str) -> List[Dict]:
+    def _plan(self, flow_type: str, task: str) -> list[dict]:
         """Plan steps based on task type"""
         if flow_type == "code":
             return [
@@ -105,7 +108,7 @@ class HybridFlow:
             return content[:800]
         return f"[Hermes error: {result.get('error')}]"
 
-    def _openclaw_step(self, action: str, task: str, step: Dict) -> str:
+    def _openclaw_step(self, action: str, task: str, step: dict) -> str:
         """OpenClaw executes step"""
         if action == "understand":
             return "Task understood"

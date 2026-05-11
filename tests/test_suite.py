@@ -13,8 +13,11 @@ Covers:
   - Performance
 """
 
-import json, os, sys, time, uuid, unittest, tempfile
-from typing import Dict, List, Optional, Any
+import json
+import os
+import sys
+import time
+import uuid
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -24,14 +27,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 class TestResult:
     def __init__(self, name: str, passed: bool, message: str = "",
-                 duration: float = 0.0, details: Optional[Dict] = None):
+                 duration: float = 0.0, details: dict | None = None):
         self.name = name
         self.passed = passed
         self.message = message
         self.duration = duration
         self.details = details or {}
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "passed": self.passed,
@@ -62,13 +65,13 @@ class TestSuite:
     """A collection of tests"""
     def __init__(self, name: str):
         self.name = name
-        self.tests: List[TestCase] = []
-        self.results: List[TestResult] = []
+        self.tests: list[TestCase] = []
+        self.results: list[TestResult] = []
 
     def add(self, test: TestCase):
         self.tests.append(test)
 
-    def run_all(self) -> Dict:
+    def run_all(self) -> dict:
         start = time.time()
         self.results.clear()
 
@@ -103,12 +106,12 @@ class TestSuite:
 class TestRunner:
     """Test runner manager"""
     def __init__(self):
-        self.suites: List[TestSuite] = []
+        self.suites: list[TestSuite] = []
 
     def add_suite(self, suite: TestSuite):
         self.suites.append(suite)
 
-    def run(self) -> Dict:
+    def run(self) -> dict:
         results = []
         total = {"passed": 0, "failed": 0, "total": 0}
         start = time.time()
@@ -321,7 +324,7 @@ class TestMultiAgent(TestCase):
         super().__init__("Multi-Agent System", "system")
 
     def run(self) -> TestResult:
-        from system.multi_agent import MultiAgentOrchestrator, AgentWorker, AgentRole
+        from system.multi_agent import MultiAgentOrchestrator
         orchestrator = MultiAgentOrchestrator()
         orchestrator.register_default_workers()
 
@@ -340,7 +343,7 @@ class TestSkillManager(TestCase):
         super().__init__("Skill Manager", "system")
 
     def run(self) -> TestResult:
-        from system.skill_manager import SkillManager, SkillCategory
+        from system.skill_manager import SkillCategory, SkillManager
         mgr = SkillManager()
         count = mgr.load_all()
 
@@ -544,7 +547,7 @@ class TestUUIDGeneration(TestCase):
 
         return TestResult(
             self.name, len(ids) == 100,
-            f"100 unique UUIDs generated",
+            "100 unique UUIDs generated",
         )
 
 
@@ -638,7 +641,7 @@ def create_full_test_suite() -> TestRunner:
     return runner
 
 
-def run_tests(verbose: bool = False) -> Dict:
+def run_tests(verbose: bool = False) -> dict:
     """Run all tests"""
     runner = create_full_test_suite()
     return runner.run()
