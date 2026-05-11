@@ -32,9 +32,9 @@ test:
 	@curl -s -X POST http://localhost:18900/web_search \
 	  -H 'Content-Type: application/json' \
 	  -d '{"query":"AHS Agent Hybrid System","count":2}' | python3 -c "import sys,json; print(f'Search: {json.load(sys.stdin)[\"count\"]} results')"
-	@curl -s -X POST http://localhost:18900/memory \
+	@curl -s -X POST http://localhost:18900/memory/stats \
 	  -H 'Content-Type: application/json' \
-	  -d '{"action":"stats","key":""}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Memory: {d[\"unique_keys\"]} keys')"
+	  -d '{}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Memory: {d.get(\"unique_keys\",0)} keys, {d.get(\"total_entries\",0)} entries')"
 
 docker:
 	docker compose up --build -d
