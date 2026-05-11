@@ -1,0 +1,70 @@
+name: AHS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install Python deps
+        run: pip install pyyaml dotenv
+
+      - name: Python syntax check
+        run: |
+          python3 -m py_compile bridge/hermes_bridge.py
+          python3 -m py_compile bridge/mcp_http_server.py
+          python3 -m py_compile system/self_learn.py
+          python3 -m py_compile system/tools.py
+          python3 -m py_compile system/integration.py
+          python3 -m py_compile main.py
+          echo "✅ All Python files compile"
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: ts-core/package-lock.json
+
+      - name: TypeScript build
+        working-directory: ts-core
+        run: |
+          npm install
+          npx tsc --noEmit
+          echo "✅ TypeScript compiles"
+
+      - name: Integration test
+        run: |
+          python3 bridge/mcp_http_server.py &
+          MCP_PID=$!
+          sleep 3
+          # Health
+          curl -s http://localhost:18900/health || echo "MCP health failed"
+          # Check it responds
+          python3 -c "
+import json, urllib.request
+req = urllib.request.Request('http://localhost:18900/health', method='GET')
+resp = urllib.request.urlopen(req, timeout=5)
+data = json.loads(resp.read())
+assert data['status'] == 'ok', f'Health failed: {data}'
+print('✅ MCP HTTP Health: OK')
+"
+          kill $MCP_PID 2>/dev/null || true
+          echo "✅ CI passed"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ AHS CI failed!"
