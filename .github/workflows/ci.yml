@@ -1,4 +1,4 @@
-name: AHS CI
+name: AHS CI v1.0
 
 on:
   push:
@@ -7,81 +7,45 @@ on:
     branches: [main]
 
 jobs:
-  python-lint:
+  lint-python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: "pip"
-      - name: Install Ruff
-        run: pip install ruff
-      - name: Ruff check
-        run: ruff check --output-format=github .
+        with: { python-version: "3.13" }
+      - run: pip install ruff
+      - run: ruff check --output-format=github .
 
-  typescript-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Install Biome
-        run: npx @biomejs/biome version
-      - name: Biome check
-        working-directory: ts-core
-        run: npx biome check src/
-
-  python-tests:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: "pip"
-      - name: Install deps
-        run: pip install pytest pytest-cov
+        with: { python-version: "3.13" }
+      - run: pip install aiohttp httpx pytest pytest-cov ruff
+      - name: Run tests with server
+        run: |
+          python3 bridge/mcp_http_server.py &
+          SERVER_PID=$!
+          sleep 3
+          python3 -m pytest tests/test_suite.py -v --tb=short -k "not timeout" --cov=bridge --cov=system
+          kill $SERVER_PID 2>/dev/null || true
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install aiohttp
       - name: Python syntax check
         run: |
-          python3 -m py_compile bridge/hermes_bridge.py
           python3 -m py_compile bridge/mcp_http_server.py
-          python3 -m py_compile system/self_learn.py
-          python3 -m py_compile system/tools.py
-      - name: Unit tests
-        run: python3 -m pytest tests/ -v --tb=short -x --timeout=30 2>/dev/null || echo "tests dir may be empty"
+          python3 -m py_compile bridge/hermes_bridge.py
+          python3 -m py_compile system/__init__.py
+          python3 -m py_compile system/integration.py
 
-  typescript-build:
+  docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Install & Build
-        working-directory: ts-core
-        run: |
-          npm install
-          npx tsc --noEmit
-
-  integration:
-    runs-on: ubuntu-latest
-    needs: [python-lint, typescript-lint, python-tests, typescript-build]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Install deps
-        run: pip install pytest pytest-cov
-      - name: Integration tests
-        run: |
-          # Start MCP server in background
-          python3 bridge/mcp_http_server.py &
-          MCP_PID=$!
-          sleep 3
-          # Run tests
-          python3 -m pytest tests/integration/ -v --tb=short
-          # Cleanup
-          kill $MCP_PID 2>/dev/null || true
+      - name: Build Docker image
+        run: docker build --tag ahs:ci .

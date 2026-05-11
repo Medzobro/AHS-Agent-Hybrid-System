@@ -1,31 +1,30 @@
-FROM python:3.13-slim
+# AHS v1.0 — Multi-stage Docker Build
+# =====================================
 
+# ---- Stage 1: Base ----
+FROM python:3.13-slim AS base
+RUN apt-get update -qq && apt-get install -y -qq curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /ahs
 
-# Python dependencies
-COPY bridge/ bridge/
-COPY system/ system/
-COPY core/ core/
-COPY skills/ skills/
-COPY ts-core/ ts-core/
+# ---- Stage 2: Python deps ----
+FROM base AS python-deps
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir aiohttp httpx pydantic pytest pytest-cov ruff
 
-COPY main.py .
-COPY demo.py .
-COPY CHANGELOG.md .
-COPY README.md .
-COPY .ahsrc .
+# ---- Stage 3: Final ----
+FROM python-deps AS final
+COPY . .
 
-# Install Node.js for TypeScript Core
-RUN apt-get update && apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g typescript && \
-    cd ts-core && npm install && npx tsc && cd .. && \
-    rm -rf /var/lib/apt/lists/*
+# Security: non-root user
+RUN useradd -m -s /bin/bash ahs && chown -R ahs:ahs /ahs
+USER ahs
 
-# Expose ports
-EXPOSE 18900 18805
+ENV AHS_MCP_PORT=18900
+ENV AHS_MCP_HOST=0.0.0.0
+ENV AHS_VERSION=1.0.0
 
-# Default: start MCP HTTP Bridge + TS Gateway
-CMD python3 bridge/mcp_http_server.py & sleep 2 && \
-    AHS_GATEWAY_PORT=18805 AHS_MCP_PORT=18900 node ts-core/dist/index.js
+HEALTHCHECK --interval=10s --timeout=5s --start-period=3s --retries=3 \
+  CMD curl -sf http://localhost:18900/health || exit 1
+
+EXPOSE 18900
+CMD ["python3", "bridge/mcp_http_server.py"]

@@ -1,48 +1,51 @@
-# Node
-node_modules/
-ts-core/node_modules/
-
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
-venv/
-.venv/
+dist/
+build/
 
-# DB (dev data)
-*.db
+# Data (local DBs)
+data/*.db
 
-# Env
+# Environment
 .env
-.env.*
+.venv/
+venv/
+*.token
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Reports
+self_learn_report.md
 
 # IDE
 .vscode/
 .idea/
-*.swo
 *.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
+# Docker
+*.tar
+
+# Node
+node_modules/
+ts-core/node_modules/
+
+# Git
+AHS-Agent-Hybrid-System/
+
 # Generated
 generated/
 
-# Archive (old, kept for reference)
-system_archive/
-
-# Dist
-ts-core/dist/
-
-# Data
-data/
-*.json
-
-# Logs
-*.log
-
-# Build
-dist/
-AHS-Agent-Hybrid-System/
+# Plans
+PLAN-v0.4.md
+V1-PLAN.md

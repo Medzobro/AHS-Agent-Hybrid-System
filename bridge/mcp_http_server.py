@@ -1,324 +1,279 @@
-#!/usr/bin/env python3
 """
-AHS v1 — MCP HTTP Bridge Server
-=================================
-Server HTTP للربط بين TypeScript Core و Python Service.
-يستمع على port 18900 (قابل للتحديد عبر env AHS_MCP_PORT).
-
-Endpoints:
-  GET  /health        → {"status":"ok","version":"0.4.0"}
-  POST /task          → يُرسل المهمة لـ Hermes ويرد بالنتيجة
-  POST /execute       → ينفذ كود (Python/Bash)
-  POST /web_search    → بحث ويب
-  POST /memory        → ذاكرة (get/set/delete)
-  POST /memory/search → بحث في الذاكرة
-  POST /memory/stats  → إحصائيات الذاكرة
+AHS v1.0 — Async MCP HTTP Server
+==================================
+Uses aiohttp for async, multi-request handling.
 """
 
-import http.server
+import asyncio
 import json
 import logging
 import os
-import platform
-import subprocess
 import sys
 import time
-import urllib.parse
-from datetime import datetime
 from typing import Any
 
-# AHS Tools — import مرة واحدة
-# Module-level monitoring
-_request_count = 0
-_server_start = time.time()
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import aiohttp
+from pathlib import Path
+
+from aiohttp import web
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from system.tools import MemoryStore, web_search
 
-# ─── Config ───────────────────────────────────────────────────
-AHS_VERSION = "0.4.0"
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger("ahs.mcp")
+
+AHS_VERSION = "1.0.0"
 PORT = int(os.environ.get("AHS_MCP_PORT", "18900"))
 HOST = os.environ.get("AHS_MCP_HOST", "0.0.0.0")
-HERMES_CLI = os.environ.get("HERMES_CLI", "/data/.local/bin/hermes")
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="[AHS-MCP] %(asctime)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger("ahs-mcp")
+# Monitoring
+_request_count = 0
+_start_time = time.time()
 
-
-# ─── Response helpers ─────────────────────────────────────────
-
-def json_response(data: dict, status: int = 200) -> bytes:
-    body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-    return (
-        f"HTTP/1.1 {status} {'OK' if status == 200 else 'Error'}\r\n"
-        f"Content-Type: application/json; charset=utf-8\r\n"
-        f"Content-Length: {len(body)}\r\n"
-        f"Access-Control-Allow-Origin: *\r\n"
-        f"\r\n"
-    ).encode() + body
+# In-memory rate limiter
+_rate_limit: dict[str, list[float]] = {}
 
 
-def error_response(message: str, status: int = 500) -> bytes:
-    return json_response({"success": False, "error": message}, status)
+def _rate_check(ip: str, max_req: int = 60, window: int = 60) -> bool:
+    now = time.time()
+    if ip not in _rate_limit:
+        _rate_limit[ip] = []
+    _rate_limit[ip] = [t for t in _rate_limit[ip] if now - t < window]
+    if len(_rate_limit[ip]) >= max_req:
+        return False
+    _rate_limit[ip].append(now)
+    return True
 
 
-# ─── Hermes sender ────────────────────────────────────────────
+# ─── Routes ───────────────────────────────────────────────────
 
-def send_to_hermes(message: str, timeout: int = 120) -> dict[str, Any]:
-    """
-    أرسل رسالة إلى Hermes عبر CLI.
-    في المرحلة القادمة: سيصبح عبر WebSocket MCP.
-    """
+async def health(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+    return web.json_response({
+        "status": "ok",
+        "version": AHS_VERSION,
+        "uptime": round(time.time() - _start_time, 2),
+        "requests": _request_count,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    })
+
+
+async def metrics(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+    return web.json_response({
+        "requests_total": _request_count,
+        "uptime_seconds": round(time.time() - _start_time, 2),
+        "version": AHS_VERSION,
+        "rate_limit_active": len(_rate_limit),
+    })
+
+
+async def status_handler(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+    return web.json_response({
+        "server": "AHS MCP Bridge v" + AHS_VERSION,
+        "uptime": round(time.time() - _start_time, 2),
+        "requests": _request_count,
+        "version": AHS_VERSION,
+    })
+
+
+async def task_handler(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+
+    client_ip = request.remote or "127.0.0.1"
+    if not _rate_check(client_ip):
+        return web.json_response({"error": "429 Too Many Requests"}, status=429)
+
     try:
-        result = subprocess.run(
-            [HERMES_CLI, "chat", "-Q", "-q", message],
-            capture_output=True,
-            timeout=timeout,
-            text=True,
-        )
-        if result.returncode == 0:
-            lines = result.stdout.strip().split("\n")
-            response = lines[-1].strip() if lines else ""
-            return {"success": True, "content": response}
-        else:
-            return {"success": False, "error": result.stderr[:500]}
-    except subprocess.TimeoutExpired:
-        return {"success": False, "error": "Hermes timeout (>120s)"}
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "Invalid JSON body"}, status=400)
+
+    task = body.get("task", "")
+    mode = body.get("mode", "hybrid")
+    timeout_s = min(int(body.get("timeout", 120)), 300)
+
+    if not task:
+        return web.json_response({"error": "Empty task"}, status=400)
+
+    t0 = time.time()
+    try:
+        # Import hermes bridge here to avoid circular imports
+        from bridge.hermes_bridge import HermesBridge
+        bridge = HermesBridge()
+        result = bridge.send_task(task, timeout=timeout_s)
+        elapsed = round(time.time() - t0, 2)
+        resp = result.get("response", "")
+        if not resp:
+            resp = str(result)
+        return web.json_response({
+            "response": str(resp)[:2000],
+            "mode": mode,
+            "elapsed": elapsed,
+        })
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        elapsed = round(time.time() - t0, 2)
+        return web.json_response({
+            "error": str(e),
+            "elapsed": elapsed,
+        }, status=500)
 
 
-# ─── AHS MCP Handler ──────────────────────────────────────────
+async def execute_handler(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "Invalid JSON"}, status=400)
 
-class AHSMCPHandler(http.server.BaseHTTPRequestHandler):
-    """HTTP handler for MCP bridge requests"""
-    
-    def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
-        
-        if parsed.path == "/health":
-            self._send_json({
-                "status": "ok",
-                "version": AHS_VERSION,
-                "uptime": round(time.time() - _server_start, 2),
-                "requests": _request_count,
-            })
-        elif parsed.path == "/metrics":
-            self._send_json({
-                "requests_total": _request_count,
-                "uptime_seconds": round(time.time() - _server_start, 2),
-                "version": AHS_VERSION,
-            })
-        elif parsed.path == "/status":
-            self._send_json({
-                "server": "AHS MCP Bridge",
-                "uptime": round(time.time() - _server_start, 2),
-                "requests": _request_count,
-            })
-        else:
-            self._send_json({"error": "Not found"}, 404)
-    
-    def do_POST(self):
-        parsed = urllib.parse.urlparse(self.path)
-        content_length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
-        
-        try:
-            data = json.loads(body)
-        except json.JSONDecodeError:
-            self._send_raw(error_response("Invalid JSON"))
-            return
-        
-        if parsed.path == "/task":
-            self._handle_task(data)
-        elif parsed.path == "/execute":
-            self._handle_execute(data)
-        elif parsed.path == "/web_search":
-            self._handle_web_search(data)
-        elif parsed.path == "/memory":
-            self._handle_memory(data)
-        elif parsed.path == "/memory/search":
-            self._handle_memory_search(data)
-        elif parsed.path == "/memory/stats":
-            self._handle_memory_stats(data)
-        else:
-            self._send_json({"error": "Not found"}, 404)
-    
-    def do_OPTIONS(self):
-        """CORS preflight"""
-        self._send_json({"ok": True})
-    
-    # ─── Task handler ─────────────────────────────────
-    
-    def _handle_task(self, data: dict):
-        task = data.get("task", "")
-        mode = data.get("mode", "auto")
-        
-        if not task:
-            self._send_json({"success": False, "error": "Missing 'task' field"}, 400)
-            return
-        
-        logger.info(f"📥 Task: {task[:80]}... (mode={mode})")
-        
-        # Quick mode — no Hermes needed
-        if mode == "quick":
-            self._send_json({
-                "success": True,
-                "mode": "quick",
-                "response": "✅ تم",
-                "elapsed": 0.01,
-            })
-            return
-        
-        # Deep/Hybrid — send to Hermes
-        message = f"أجب على هذا السؤال بإجابة مباشرة ومفيدة:\n{task}"
-        result = send_to_hermes(message, timeout=120)
-        
-        if result["success"]:
-            logger.info(f"📤 Response: {result['content'][:80]}...")
-            self._send_json({
-                "success": True,
-                "mode": mode,
-                "response": result["content"],
-            })
-        else:
-            logger.error(f"❌ Hermes failed: {result['error']}")
-            self._send_json(result, 502)
-    
-    # ─── Execute handler ──────────────────────────────
-    
-    def _handle_execute(self, data: dict):
-        code = data.get("code", "")
-        lang = data.get("lang", "python3")
-        
-        if not code:
-            self._send_json({"success": False, "error": "Missing 'code'"}, 400)
-            return
-        
-        logger.info(f"⚡ Execute: {lang} ({len(code)} chars)")
-        
-        try:
-            if lang == "python3":
-                result = subprocess.run(
-                    ["python3", "-c", code],
-                    capture_output=True, text=True, timeout=30
-                )
-                response = {
-                    "success": result.returncode == 0,
-                    "stdout": result.stdout[:1000],
-                    "stderr": result.stderr[:500],
-                    "exit_code": result.returncode,
-                }
-            elif lang == "bash":
-                result = subprocess.run(
-                    ["bash", "-c", code],
-                    capture_output=True, text=True, timeout=30
-                )
-                response = {
-                    "success": result.returncode == 0,
-                    "stdout": result.stdout[:1000],
-                    "stderr": result.stderr[:500],
-                    "exit_code": result.returncode,
-                }
-            else:
-                response = {"success": False, "error": f"Unsupported language: {lang}"}
-            
-            self._send_json(response)
-        except subprocess.TimeoutExpired:
-            self._send_json({"success": False, "error": "Execution timeout (>30s)"}, 504)
-        except Exception as e:
-            self._send_json({"success": False, "error": str(e)}, 500)
-    
-    # ─── Web Search handler ───────────────────────────
-    
-    def _handle_web_search(self, data: dict):
-        query = data.get("query", data.get("q", ""))
-        count = data.get("count", 5)
-        
-        if not query:
-            self._send_json({"success": False, "error": "Missing 'query'"}, 400)
-            return
-        
-        results = web_search(query, count)
-        self._send_json({"success": True, "results": results, "count": len(results)})
-    
-    # ─── Memory handlers ──────────────────────────────
-    
-    def _get_memory(self):
-        """Get or create global MemoryStore instance"""
-        if not hasattr(self.__class__, '_memory'):
-            db_path = os.environ.get("AHS_MEMORY_DB",
-                os.path.join(os.path.dirname(__file__), '..', 'data', 'ahs_memory.db'))
-            self.__class__._memory = MemoryStore(db_path)
-        return self.__class__._memory
-    
-    def _handle_memory(self, data: dict):
-        action = data.get("action", "get")
-        key = data.get("key", "")
-        value = data.get("value", "")
-        mem = self._get_memory()
-        
-        if action == "set":
-            ttl = data.get("ttl")
-            result = mem.set(key, value, ttl)
-            self._send_json({"success": True, **result})
-        elif action == "get":
-            val = mem.get(key)
-            self._send_json({"success": True, "key": key, "value": val})
-        elif action == "delete":
-            mem.delete(key)
-            self._send_json({"success": True})
-        else:
-            self._send_json({"success": False, "error": f"Unknown action: {action}"}, 400)
-    
-    def _handle_memory_search(self, data: dict):
-        query = data.get("query", "")
-        mem = self._get_memory()
-        results = mem.search(query)
-        self._send_json({"success": True, "results": results})
-    
-    def _handle_memory_stats(self, data: dict):
-        mem = self._get_memory()
-        stats = mem.stats()
-        self._send_json({"success": True, **stats})
-    
-    # ─── Helpers ──────────────────────────────────────
-    
-    def _send_json(self, data: dict, status: int = 200):
-        self._send_raw(json_response(data, status))
-    
-    def _send_raw(self, data: bytes):
-        self.wfile.write(data)
-    
-    def log_message(self, format, *args):
-        logger.info(f"{self.client_address[0]} - {format % args}")
+    code = body.get("code", "")
+    lang = body.get("lang", "python3")
+    if not code:
+        return web.json_response({"error": "Empty code"}, status=400)
+
+    t0 = time.time()
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            lang, "-c", code,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)
+        return web.json_response({
+            "stdout": stdout.decode()[:1000],
+            "stderr": stderr.decode()[:1000],
+            "exit_code": proc.returncode,
+            "elapsed": round(time.time() - t0, 2),
+        })
+    except asyncio.TimeoutError:
+        return web.json_response({"error": "Execution timeout", "elapsed": 30}, status=504)
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
 
 
-# ─── Server ────────────────────────────────────────────────────
+async def web_search_handler(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "Invalid JSON"}, status=400)
 
-class ReuseHTTPServer(http.server.ThreadingHTTPServer):
-    allow_reuse_address = True
+    query = body.get("query", "")
+    count = min(int(body.get("count", 5)), 10)
+    if not query:
+        return web.json_response({"error": "Empty query"}, status=400)
+
+    try:
+        results = web_search(query, count=count)
+        return web.json_response({
+            "results": results[:10],
+            "count": len(results),
+        })
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def memory_handler(request: web.Request) -> web.Response:
+    global _request_count
+    _request_count += 1
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "Invalid JSON"}, status=400)
+
+    action = body.get("action", "get")
+    key = body.get("key", "")
+    value = body.get("value", "")
+
+    try:
+        store = MemoryStore()
+        if action == "set" and key and value:
+            store.set(key, value)
+        elif action == "get" and key:
+            val = store.get(key)
+            return web.json_response({"key": key, "value": val})
+        elif action == "delete" and key:
+            store.delete(key)
+        elif action == "list":
+            all_mem = store.list_keys(50)
+            return web.json_response({"count": len(all_mem), "keys": all_mem[:50]})
+        return web.json_response({"status": "ok", "action": action})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def memory_search_handler(request: web.Request) -> web.Response:
+    body = await _safe_read_json(request)
+    query = (body or {}).get("query", "")
+    try:
+        store = MemoryStore()
+        results = store.search(query)
+        return web.json_response({"results": results[:10], "count": len(results)})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def memory_stats_handler(request: web.Request) -> web.Response:
+    try:
+        store = MemoryStore()
+        return web.json_response(store.stats())
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def _safe_read_json(request: web.Request) -> dict:
+    try:
+        return await request.json()
+    except Exception:
+        return {}
+
+
+# ─── App ──────────────────────────────────────────────────────
+
+def create_app() -> web.Application:
+    app = web.Application()
+    app.add_routes([
+        web.get("/", dashboard_handler),
+        web.get("/dashboard", dashboard_handler),
+        web.get("/health", health),
+        web.get("/metrics", metrics),
+        web.get("/status", status_handler),
+        web.post("/task", task_handler),
+        web.post("/execute", execute_handler),
+        web.post("/web_search", web_search_handler),
+        web.post("/memory", memory_handler),
+        web.post("/memory/search", memory_search_handler),
+        web.post("/memory/stats", memory_stats_handler),
+    ])
+    return app
+
+
+async def dashboard_handler(request: web.Request) -> web.Response:
+    html_path = Path(__file__).parent / "dashboard.html"
+    if html_path.exists():
+        content = html_path.read_text(encoding="utf-8")
+        return web.Response(text=content, content_type="text/html")
+    return web.Response(text="Dashboard not found", status=404)
+
+async def cleanup(app: web.Application):
+    """Graceful shutdown."""
+    log.info("Shutting down AHS MCP server...")
+    await asyncio.sleep(0.1)
+
 
 def main():
-    print(f"\n{'='*50}")
-    print(f"  🔌 AHS MCP Bridge Server v{AHS_VERSION}")
-    print("  ربط TypeScript Core ↔ Python Service")
-    print(f"{'='*50}")
-    print(f"\n  🌐 Listening on {HOST}:{PORT}")
-    print("     GET  /health  → Health check")
-    print("     POST /task    → Process task via Hermes")
-    print("     POST /execute → Execute code\n")
-    
-    server = ReuseHTTPServer((HOST, PORT), AHSMCPHandler)
-    
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\n  👋 Shutting down...")
-        server.shutdown()
+    log.info(f"🤝 AHS v{AHS_VERSION} Async MCP Bridge — {HOST}:{PORT}")
+    app = create_app()
+    web.run_app(app, host=HOST, port=PORT, print=lambda _: None, shutdown_timeout=3)
 
 
 if __name__ == "__main__":
